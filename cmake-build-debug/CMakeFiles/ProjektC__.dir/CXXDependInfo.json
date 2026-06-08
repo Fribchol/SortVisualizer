@@ -1,0 +1,18 @@
+{
+	"bmi-installation" : null,
+	"compiler-frontend-variant" : "MSVC",
+	"compiler-id" : "MSVC",
+	"compiler-simulate-id" : "",
+	"config" : "Debug",
+	"cxx-modules" : {},
+	"dir-cur-bld" : "C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug",
+	"dir-cur-src" : "C:/Users/frieb/CLionProjects/ProjektC++",
+	"dir-top-bld" : "C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug",
+	"dir-top-src" : "C:/Users/frieb/CLionProjects/ProjektC++",
+	"exports" : [],
+	"forward-modules-from-target-dirs" : [],
+	"include-dirs" : [],
+	"language" : "CXX",
+	"linked-target-dirs" : [],
+	"module-dir" : "C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug/CMakeFiles/ProjektC__.dir"
+}
