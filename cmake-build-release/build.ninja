@@ -57,6 +57,14 @@ build CMakeFiles\SortVisualizer.dir\src\main.cpp.obj: CXX_COMPILER__SortVisualiz
   TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
   TARGET_PDB = SortVisualizer.pdb
 
+build CMakeFiles\SortVisualizer.dir\src\SortAlgorithms.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\SortAlgorithms.cpp || cmake_object_order_depends_target_SortVisualizer
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src -external:IC:\vcpkg\installed\x64-windows\include -external:W0
+  OBJECT_DIR = CMakeFiles\SortVisualizer.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortVisualizer.dir\src
+  TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
+  TARGET_PDB = SortVisualizer.pdb
+
 build CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\Visualizer.cpp || cmake_object_order_depends_target_SortVisualizer
   FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD
   INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src -external:IC:\vcpkg\installed\x64-windows\include -external:W0
@@ -65,7 +73,15 @@ build CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: CXX_COMPILER__SortVi
   TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
   TARGET_PDB = SortVisualizer.pdb
 
-build CMakeFiles\SortVisualizer.dir\src\SortAlgorithms.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\SortAlgorithms.cpp || cmake_object_order_depends_target_SortVisualizer
+build CMakeFiles\SortVisualizer.dir\src\VisualizerDraw.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\VisualizerDraw.cpp || cmake_object_order_depends_target_SortVisualizer
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src -external:IC:\vcpkg\installed\x64-windows\include -external:W0
+  OBJECT_DIR = CMakeFiles\SortVisualizer.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortVisualizer.dir\src
+  TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
+  TARGET_PDB = SortVisualizer.pdb
+
+build CMakeFiles\SortVisualizer.dir\src\VisualizerEvents.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\VisualizerEvents.cpp || cmake_object_order_depends_target_SortVisualizer
   FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD
   INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src -external:IC:\vcpkg\installed\x64-windows\include -external:W0
   OBJECT_DIR = CMakeFiles\SortVisualizer.dir
@@ -121,19 +137,11 @@ build CMakeFiles\SortVisualizer.dir\src\algorithms\CountingSort.cpp.obj: CXX_COM
   TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
   TARGET_PDB = SortVisualizer.pdb
 
-build CMakeFiles\SortVisualizer.dir\src\VisualizerDraw.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\VisualizerDraw.cpp || cmake_object_order_depends_target_SortVisualizer
+build CMakeFiles\SortVisualizer.dir\src\algorithms\BubbleSort.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\BubbleSort.cpp || cmake_object_order_depends_target_SortVisualizer
   FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD
   INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src -external:IC:\vcpkg\installed\x64-windows\include -external:W0
   OBJECT_DIR = CMakeFiles\SortVisualizer.dir
-  OBJECT_FILE_DIR = CMakeFiles\SortVisualizer.dir\src
-  TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
-  TARGET_PDB = SortVisualizer.pdb
-
-build CMakeFiles\SortVisualizer.dir\src\VisualizerEvents.cpp.obj: CXX_COMPILER__SortVisualizer_unscanned_Release C$:\Users\frieb\CLionProjects\ProjektC++\src\VisualizerEvents.cpp || cmake_object_order_depends_target_SortVisualizer
-  FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD
-  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src -external:IC:\vcpkg\installed\x64-windows\include -external:W0
-  OBJECT_DIR = CMakeFiles\SortVisualizer.dir
-  OBJECT_FILE_DIR = CMakeFiles\SortVisualizer.dir\src
+  OBJECT_FILE_DIR = CMakeFiles\SortVisualizer.dir\src\algorithms
   TARGET_COMPILE_PDB = CMakeFiles\SortVisualizer.dir\
   TARGET_PDB = SortVisualizer.pdb
 
@@ -145,7 +153,7 @@ build CMakeFiles\SortVisualizer.dir\src\VisualizerEvents.cpp.obj: CXX_COMPILER__
 #############################################
 # Link the executable SortVisualizer.exe
 
-build SortVisualizer.exe: CXX_EXECUTABLE_LINKER__SortVisualizer_Release CMakeFiles\SortVisualizer.dir\src\main.cpp.obj CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj CMakeFiles\SortVisualizer.dir\src\SortAlgorithms.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\Quicksort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\MergeSortRec.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\MergeSortIt.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\HeapSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\RadixSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\CountingSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\VisualizerDraw.cpp.obj CMakeFiles\SortVisualizer.dir\src\VisualizerEvents.cpp.obj | C$:\vcpkg\installed\x64-windows\lib\SDL3_ttf.lib C$:\vcpkg\installed\x64-windows\lib\SDL3.lib
+build SortVisualizer.exe: CXX_EXECUTABLE_LINKER__SortVisualizer_Release CMakeFiles\SortVisualizer.dir\src\main.cpp.obj CMakeFiles\SortVisualizer.dir\src\SortAlgorithms.cpp.obj CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj CMakeFiles\SortVisualizer.dir\src\VisualizerDraw.cpp.obj CMakeFiles\SortVisualizer.dir\src\VisualizerEvents.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\Quicksort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\MergeSortRec.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\MergeSortIt.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\HeapSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\RadixSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\CountingSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\BubbleSort.cpp.obj | C$:\vcpkg\installed\x64-windows\lib\SDL3_ttf.lib C$:\vcpkg\installed\x64-windows\lib\SDL3.lib
   FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -MD
   LINK_FLAGS = /machine:x64 /INCREMENTAL:NO /subsystem:windows
   LINK_LIBRARIES = C:\vcpkg\installed\x64-windows\lib\SDL3_ttf.lib  C:\vcpkg\installed\x64-windows\lib\SDL3.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib

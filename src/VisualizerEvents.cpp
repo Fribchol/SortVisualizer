@@ -47,7 +47,6 @@ void Visualizer::handleEvents() {
 
             const bool shift = (SDL_GetModState() & SDL_KMOD_SHIFT) != 0;
 
-            // ── Scrollen Linkes Fenster (Zahlen/Balken) ──
             if (logicalX < MET_X) {
                 m_autoScrollNumbers = false;
                 if (e.wheel.x != 0) m_numbersScrollX -= e.wheel.x * 40.0f;
@@ -56,9 +55,8 @@ void Visualizer::handleEvents() {
                     else       m_numbersScrollY -= static_cast<int32_t>(e.wheel.y) * 3;
                 }
             }
-            // ── Scrollen Rechtes Fenster (Erklärungspanel) ──
             else {
-                m_autoScrollNumbers = false; // Scrollen deaktiviert Auto-Follow überall
+                m_autoScrollNumbers = false;
                 if (e.wheel.x != 0) m_explanationScrollX -= e.wheel.x * 40.0f;
                 if (e.wheel.y != 0) {
                     if (shift) m_explanationScrollX -= e.wheel.y * 40.0f;
@@ -92,7 +90,6 @@ void Visualizer::handleSettingsClick(float mx, float my) {
 }
 
 void Visualizer::handleButtonClick(float mx, float my) {
-    // Zurück zum Hauptmenü
     if (!m_sorting && isInside(mx, my, m_btnBackToMenu)) {
         m_appState = AppState::MainMenu;
         return;
@@ -111,12 +108,23 @@ void Visualizer::handleButtonClick(float mx, float my) {
         }
     }
 
-    if (!m_sorting && isInside(mx, my, m_startButton)) {
-        m_autoScrollNumbers = true;
-        startLive();
+    if (isInside(mx, my, m_startButton)) {
+        if (!m_sorting) {
+            m_autoScrollNumbers = true;
+            startLive();
+        }
     }
     else if (isInside(mx, my, m_stopButton)) {
-        stopSort();
+        if (m_sorting) {
+            if (m_liveMode) pauseSort();
+            else { m_autoScrollNumbers = true; resumeSort(); }
+        }
+    }
+    // ── NEU: ABBRUCH BUTTON GEKLICKT ──
+    else if (isInside(mx, my, m_cancelButton)) {
+        if (m_sorting || m_historyIndex > 0) {
+            cancelSort();
+        }
     }
     else if (isInside(mx, my, m_stepBackButton)) {
         m_autoScrollNumbers = true;
@@ -148,39 +156,35 @@ void Visualizer::handleButtonClick(float mx, float my) {
     }
 }
 
-void Visualizer::stopSort() {
-    m_stopRequested = true;
-    { std::lock_guard lock(m_mutex); m_stepRequested = true; }
-    m_stepCV.notify_all();
-}
-
 void Visualizer::stepForward() {
-    if (!m_liveMode && m_sorting && !m_threadFinished) {
-        { std::lock_guard lock(m_mutex); m_stepRequested = true; }
-        m_stepCV.notify_one();
-    } else if (!m_liveMode && (!m_sorting || m_threadFinished)) {
-        if (m_historyIndex < static_cast<int32_t>(m_history.size()) - 1) {
-            applyHistoryStep(m_historyIndex + 1);
-        } else if (!m_threadFinished && m_historyIndex == static_cast<int32_t>(m_history.size()) - 1) {
-            startStepping();
-        }
+    std::lock_guard lock(m_mutex);
+    if (m_historyIndex < static_cast<int32_t>(m_history.size()) - 1) {
+        m_historyIndex++;
+        const auto& step = m_history[m_historyIndex];
+        m_array = step.array;
+        m_highlightA = step.indexA;
+        m_highlightB = step.indexB;
+        m_actionText = step.action;
+    } else if (m_threadFinished && m_sorting) {
+        m_sorting = false;
+        m_actionText = "Sortierung erfolgreich!";
+        m_highlightA = -1;
+        m_highlightB = -1;
     }
 }
 
 void Visualizer::stepBackward() {
-    if (!m_liveMode && m_historyIndex > 0) {
-        applyHistoryStep(m_historyIndex - 1);
-    }
-}
-
-void Visualizer::applyHistoryStep(int32_t index) {
     std::lock_guard lock(m_mutex);
-    m_historyIndex = index;
-    if (index >= 0 && index < static_cast<int32_t>(m_history.size())) {
-        const auto& step = m_history[index];
+    if (m_historyIndex > 0) {
+        m_historyIndex--;
+        const auto& step = m_history[m_historyIndex];
         m_array = step.array;
         m_highlightA = step.indexA;
         m_highlightB = step.indexB;
         m_actionText = step.action;
     }
+}
+
+void Visualizer::applyHistoryStep(int32_t index) {
+    // Ungenutzt
 }

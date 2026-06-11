@@ -9,17 +9,24 @@ find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_ttf REQUIRED CONFIG)
 
 add_executable(SortVisualizer
+        # -- Core & Main --
         src/main.cpp
-        src/Visualizer.cpp
         src/SortAlgorithms.cpp
+
+        # -- Visualizer & UI --
+        src/Visualizer.cpp
+        src/VisualizerDraw.cpp
+        src/VisualizerEvents.cpp
+
+        # -- Algorithmen --
         src/algorithms/QuickSort.cpp
         src/algorithms/MergeSortRec.cpp
         src/algorithms/MergeSortIt.cpp
         src/algorithms/HeapSort.cpp
         src/algorithms/RadixSort.cpp
         src/algorithms/CountingSort.cpp
-        src/VisualizerDraw.cpp
-        src/VisualizerEvents.cpp
+        src/algorithms/BubbleSort.cpp
+        src/algorithms/BubbleSort.hpp
 )
 
 target_link_libraries(SortVisualizer PRIVATE
@@ -29,12 +36,14 @@ target_link_libraries(SortVisualizer PRIVATE
 
 target_include_directories(SortVisualizer PRIVATE src)
 
+# Kopiert die Schriftart automatisch in den Build-Ordner
 configure_file(
         ${CMAKE_SOURCE_DIR}/DejaVuSans.ttf
         ${CMAKE_BINARY_DIR}/DejaVuSans.ttf
         COPYONLY
 )
 
+# Sorgt dafür, dass unter Windows im Release-Modus keine störende Konsole im Hintergrund aufgeht
 if(WIN32)
     set_target_properties(SortVisualizer PROPERTIES
             WIN32_EXECUTABLE $<CONFIG:Release>

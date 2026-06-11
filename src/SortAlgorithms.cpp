@@ -17,6 +17,7 @@
 #include "algorithms/HeapSort.hpp"
 #include "algorithms/RadixSort.hpp"
 #include "algorithms/CountingSort.hpp"
+#include "algorithms/BubbleSort.hpp" // NEU: Include für BubbleSort
 #include <format>
 #include <array>      // std::array: Größe zur Compile-Zeit bekannt
 #include <stdexcept>  // std::out_of_range
@@ -25,22 +26,10 @@ namespace SortAlgorithms
 {
     // ============================================================
     // getInfo – Theoretische Infos pro Algorithmus
-    //
-    // ── std::array<T, N> statt std::vector<T> ────────────────────
-    // std::array: Größe ist zur Compile-Zeit fest (hier: 6).
-    // Kein Heap-Alloc, kein Overhead, kein versehentliches Resize.
-    // std::vector wäre hier falsch: Größe ändert sich nie.
-    //
-    // ── static ───────────────────────────────────────────────────
-    // static: Tabelle wird nur einmal beim ersten Aufruf angelegt
-    // und dann wiederverwendet. Kein unnötiges Kopieren.
-    //
-    // ── [[nodiscard]] ────────────────────────────────────────────
-    // Definiert im Header → Compiler warnt bei ignoriertem Wert
     // ============================================================
     [[nodiscard]] AlgoInfo getInfo(uint8_t idx)
     {
-        static const std::array<AlgoInfo, 6> table
+        static const std::array<AlgoInfo, 7> table
         {{
             {   // 0: QuickSort
                 "QuickSort",
@@ -83,13 +72,16 @@ namespace SortAlgorithms
                 "O(k)", "Ja",
                 "Optimal bei kleinem Wertebereich k",
                 "Gut - linearer Zugriff, k-grosses Count-Array"
+            },
+            {   // 6: BubbleSort
+                "BubbleSort",
+                "O(n)", "O(n^2)", "O(n^2)",
+                "O(1)", "Ja",
+                "Schlecht - extrem langsam bei grossen Arrays",
+                "Sehr gut - rein sequenzieller Speicherzugriff"
             }
         }};
 
-        // ── at() statt [] ─────────────────────────────────────────
-        // at() wirft std::out_of_range bei ungültigem Index.
-        // [] würde undefined behavior produzieren → nie benutzen
-        // wenn der Index nicht garantiert gültig ist!
         if (idx >= table.size())
             throw std::out_of_range(
                 std::format("Unbekannter Algorithmus-Index: {}", idx));
@@ -99,11 +91,6 @@ namespace SortAlgorithms
 
     // ============================================================
     // Dispatcher – delegiert an einzelne Algorithmus-Dateien
-    //
-    // ── std::move(cb) ─────────────────────────────────────────────
-    // std::function kopieren ist teuer (Heap-Alloc möglich).
-    // std::move übergibt Ownership ohne Kopie → O(1) statt O(n).
-    // Nach move ist cb "leer" – aber wir brauchen ihn danach nicht.
     // ============================================================
     void quickSort(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m)
     { Algorithms::quickSort(arr, std::move(cb), m); }
@@ -122,4 +109,8 @@ namespace SortAlgorithms
 
     void countingSort(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m)
     { Algorithms::countingSort(arr, std::move(cb), m); }
+
+    // NEU: Dispatcher leitet BubbleSort an die neue Datei weiter
+    void bubbleSort(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m)
+    { Algorithms::bubbleSort(arr, std::move(cb), m); }
 }

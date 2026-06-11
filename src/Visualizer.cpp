@@ -71,25 +71,22 @@ void Visualizer::initSDL()
 // ============================================================
 void Visualizer::initButtons()
 {
-    // ── Hauptmenü Buttons ──
     float centerX = WIN_W / 2.0f - 125.0f;
     m_btnMenuStart    = {centerX, 300.0f, 250.0f, 60.0f, "Visualizer Starten", false};
     m_btnMenuSettings = {centerX, 400.0f, 250.0f, 60.0f, "Einstellungen", false};
     m_btnMenuQuit     = {centerX, 500.0f, 250.0f, 60.0f, "Beenden", false};
 
-    // ── Einstellungen Buttons & Slider ──
     m_btnSettingsFullscreen = {centerX, 300.0f, 250.0f, 50.0f, "Vollbild: AUS", false};
     m_volumeSliderBg        = {centerX, 450.0f, 250.0f, 20.0f};
-    m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurueck zum Menue", false};
+    m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurück zum Menü", false};
 
-    // ── Visualizer UI Buttons ──
     const float row1Y = WIN_H - UI_H + 10.0f;
     const float row2Y = WIN_H - UI_H + 65.0f;
     const float row3Y = WIN_H - UI_H + 115.0f;
 
-    static constexpr std::array<std::string_view, 6> labels
+    static constexpr std::array<std::string_view, 7> labels
     {{ "QuickSort", "MergeSort (rek)", "MergeSort (it)",
-       "HeapSort",  "RadixSort",       "CountingSort" }};
+       "HeapSort",  "RadixSort",       "CountingSort", "BubbleSort" }};
 
     float bx = VIS_X;
     for (uint8_t i = 0; i < labels.size(); ++i) {
@@ -97,16 +94,19 @@ void Visualizer::initButtons()
         bx += 175.0f;
     }
 
-    m_startButton    = {10.0f,  row2Y, 110.0f, 40.0f, "Start",  false};
-    m_stopButton     = {130.0f, row2Y, 110.0f, 40.0f, "Stop",   false};
-    m_stepBackButton = {250.0f, row2Y,  80.0f, 40.0f, "  < ",   false};
-    m_stepFwdButton  = {340.0f, row2Y,  80.0f, 40.0f, "  > ",   false};
-    m_randomButton   = {430.0f, row2Y, 110.0f, 40.0f, "Random", false};
+    // Buttons neu ausrichten, um Platz für Abbruch zu machen
+    m_startButton    = {10.0f,  row2Y, 100.0f, 40.0f, "Start",  false};
+    m_stopButton     = {120.0f, row2Y, 100.0f, 40.0f, "Stop",   false}; // Das wird der Pause/Weiter Button
+    m_cancelButton   = {230.0f, row2Y, 110.0f, 40.0f, "Abbruch",false}; // NEU
+    m_stepBackButton = {350.0f, row2Y,  70.0f, 40.0f, "  < ",   false};
+    m_stepFwdButton  = {430.0f, row2Y,  70.0f, 40.0f, "  > ",   false};
+    m_randomButton   = {510.0f, row2Y, 110.0f, 40.0f, "Random", false};
+
     m_sizeDownButton = {10.0f,  row3Y,  40.0f, 35.0f, "-",      false};
     m_sizeUpButton   = {100.0f, row3Y,  40.0f, 35.0f, "+",      false};
     m_viewBarsButton = {160.0f, row3Y, 110.0f, 35.0f, "Balken", true };
     m_viewNumsButton = {280.0f, row3Y, 110.0f, 35.0f, "Zahlen", false};
-    m_btnBackToMenu  = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenue", false};
+    m_btnBackToMenu  = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenü", false};
 }
 
 // ============================================================
@@ -129,13 +129,13 @@ void Visualizer::fillRandom()
     m_liveMode       = false;
     m_sorting        = false;
 
-    // Alle Scroll-Positionen auf 0 setzen
     m_explanationScrollY = 0;
     m_explanationScrollX = 0.0f;
     m_numbersScrollY = 0;
     m_numbersScrollX = 0.0f;
     m_autoScrollNumbers = true;
 
+    m_finalStepForIndex.clear();
     m_history.push_back({m_array, -1, -1, "Anfangszustand"});
     m_historyIndex = 0;
 }
@@ -146,12 +146,9 @@ void Visualizer::joinThread()
     if (m_sortThread.joinable())
     {
         m_stopRequested = true;
-        { std::lock_guard lock(m_mutex); m_stepRequested = true; }
-        m_stepCV.notify_all();
         m_sortThread.join();
     }
-    m_sorting = m_stopRequested = m_stepRequested =
-                m_stepDone      = m_threadFinished = false;
+    m_sorting = m_stopRequested = m_threadFinished = false;
 }
 
 // ============================================================
@@ -173,15 +170,33 @@ void Visualizer::sortThreadFunc()
             case Algorithm::HeapSort:     SortAlgorithms::heapSort    (m_array, cb, m_metrics); break;
             case Algorithm::RadixSort:    SortAlgorithms::radixSort   (m_array, cb, m_metrics); break;
             case Algorithm::CountingSort: SortAlgorithms::countingSort(m_array, cb, m_metrics); break;
+            case Algorithm::BubbleSort:   SortAlgorithms::bubbleSort  (m_array, cb, m_metrics); break;
         }
+
+        {
+            std::lock_guard lock(m_mutex);
+            if (!m_history.empty()) {
+                const auto& finalArray = m_history.back().array;
+                m_finalStepForIndex.assign(finalArray.size(), -1);
+
+                for (size_t i = 0; i < finalArray.size(); ++i) {
+                    int lastWrong = -1;
+                    for (size_t s = 0; s < m_history.size(); ++s) {
+                        if (i < m_history[s].array.size() && m_history[s].array[i] != finalArray[i]) {
+                            lastWrong = static_cast<int>(s);
+                        }
+                    }
+                    m_finalStepForIndex[i] = lastWrong;
+                }
+            }
+        }
+
     }
     catch (const std::runtime_error& e)
     { if (std::string_view{e.what()} != "__STOP__") throw; }
     catch (...) {}
 
     m_threadFinished = true;
-    m_sorting        = false;
-    m_mainCV.notify_all();
 }
 
 // ============================================================
@@ -216,46 +231,9 @@ void Visualizer::playBeep(int32_t value, int32_t maxValue, int32_t durationMs)
 // ============================================================
 void Visualizer::onSortStep(const std::vector<int32_t>& arr, int32_t a, int32_t b, std::string_view action)
 {
-    {
-        std::lock_guard lock(m_mutex);
-        if (static_cast<int32_t>(m_history.size()) < MAX_HISTORY)
-            m_history.push_back({arr, a, b, std::string(action)});
-    }
-
-    {
-        std::lock_guard lock(m_mutex);
-        m_array = arr;
-        m_highlightA = a;
-        m_highlightB = b;
-        m_actionText = action;
-        m_metrics.elapsedMs = std::chrono::duration<double, std::milli>(
-            std::chrono::steady_clock::now() - m_sortStart).count();
-    }
-
-    if (m_liveMode)
-    {
-        int32_t maxVal = arr.empty() ? 1 : *std::ranges::max_element(arr);
-        int32_t valForPitch = maxVal / 2;
-
-        if (a >= 0 && a < static_cast<int32_t>(arr.size())) valForPitch = arr[a];
-        else if (b >= 0 && b < static_cast<int32_t>(arr.size())) valForPitch = arr[b];
-
-        playBeep(valForPitch, maxVal, std::max(1u, m_delayMs));
-
-        if (m_delayMs > 0) std::this_thread::sleep_for(std::chrono::milliseconds(m_delayMs));
-        if (m_stopRequested.load()) throw std::runtime_error("__STOP__");
-    }
-    else
-    {
-        m_stepDone = true;
-        m_mainCV.notify_one();
-
-        std::unique_lock lock(m_mutex);
-        m_stepCV.wait(lock, [this]{ return m_stepRequested.load() || m_stopRequested.load(); });
-        m_stepRequested = false;
-
-        std::lock_guard lockHist(m_mutex);
-        m_historyIndex = static_cast<int32_t>(m_history.size()) - 1;
+    std::lock_guard lock(m_mutex);
+    if (m_history.size() < MAX_HISTORY) {
+        m_history.push_back({arr, a, b, std::string(action)});
     }
 }
 
@@ -265,15 +243,20 @@ void Visualizer::startLive()
     if (m_sorting) return;
     joinThread();
 
-    m_liveMode = m_sorting = true;
-    m_stopRequested = m_stepRequested = m_stepDone = m_threadFinished = false;
+    m_liveMode = true;
+    m_sorting = true;
+    m_stopRequested = false;
     m_metrics  = {};
 
     const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1, "Anfangszustand"} : m_history.front();
     m_history.clear();
     m_history.push_back(anfang);
-    m_array = anfang.array; m_historyIndex = 0;
+    m_array = anfang.array;
+    m_historyIndex = 0;
+    m_finalStepForIndex.clear();
+
     m_sortStart = std::chrono::steady_clock::now();
+    m_lastStepTime = m_sortStart;
 
     m_sortThread = std::thread(&Visualizer::sortThreadFunc, this);
 }
@@ -284,22 +267,52 @@ void Visualizer::startStepping()
     if (m_sorting) return;
     joinThread();
 
-    m_liveMode = false; m_sorting = true;
-    m_stopRequested = m_stepRequested = m_stepDone = m_threadFinished = false;
+    m_liveMode = false;
+    m_sorting = true;
+    m_stopRequested = false;
     m_metrics  = {};
 
     const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1, "Anfangszustand"} : m_history.front();
     m_history.clear();
     m_history.push_back(anfang);
-    m_array = anfang.array; m_historyIndex = 0;
-    m_sortStart  = std::chrono::steady_clock::now();
-    m_sortThread = std::thread(&Visualizer::sortThreadFunc, this);
+    m_array = anfang.array;
+    m_historyIndex = 0;
+    m_finalStepForIndex.clear();
 
-    {
-        std::unique_lock lock(m_mutex);
-        m_mainCV.wait_for(lock, std::chrono::milliseconds(500), [this]{ return m_stepDone.load() || m_threadFinished.load(); });
-        m_stepDone = false;
+    m_sortStart  = std::chrono::steady_clock::now();
+
+    m_sortThread = std::thread(&Visualizer::sortThreadFunc, this);
+}
+
+void Visualizer::pauseSort() {
+    m_liveMode = false;
+}
+
+void Visualizer::resumeSort() {
+    m_liveMode = true;
+    m_lastStepTime = std::chrono::steady_clock::now();
+}
+
+// NEU: Hält alles an und spult zurück zum initialen Zustand
+void Visualizer::cancelSort() {
+    joinThread();
+    m_liveMode = false;
+    m_sorting = false;
+
+    if (!m_history.empty()) {
+        SortStep initial = m_history.front();
+        m_history.clear();
+        m_history.push_back(initial);
+        m_array = initial.array;
     }
+
+    m_historyIndex = 0;
+    m_highlightA = -1;
+    m_highlightB = -1;
+    m_actionText = "Abgebrochen - Anfangszustand";
+    m_finalStepForIndex.clear();
+    m_metrics = {};
+    m_autoScrollNumbers = true;
 }
 
 // ============================================================
@@ -308,6 +321,39 @@ void Visualizer::run()
     while (m_running)
     {
         handleEvents();
+
+        auto now = std::chrono::steady_clock::now();
+
+        if (m_sorting && m_liveMode) {
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStepTime).count();
+            if (elapsed >= m_delayMs) {
+                m_lastStepTime = now;
+
+                std::lock_guard lock(m_mutex);
+                if (m_historyIndex < static_cast<int32_t>(m_history.size()) - 1) {
+                    m_historyIndex++;
+                    const auto& step = m_history[m_historyIndex];
+                    m_array = step.array;
+                    m_highlightA = step.indexA;
+                    m_highlightB = step.indexB;
+                    m_actionText = step.action;
+
+                    int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
+                    int32_t valForPitch = maxVal / 2;
+                    if (step.indexA >= 0 && step.indexA < m_array.size()) valForPitch = m_array[step.indexA];
+                    else if (step.indexB >= 0 && step.indexB < m_array.size()) valForPitch = m_array[step.indexB];
+
+                    playBeep(valForPitch, maxVal, std::max(1u, m_delayMs));
+                } else if (m_threadFinished) {
+                    m_sorting = false;
+                    m_liveMode = false;
+                    m_actionText = "Sortierung erfolgreich!";
+                    m_highlightA = -1;
+                    m_highlightB = -1;
+                }
+            }
+        }
+
         draw();
         SDL_Delay(16);
     }

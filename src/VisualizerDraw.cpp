@@ -104,7 +104,7 @@ void Visualizer::drawSettings()
     drawBtn(m_btnSettingsFullscreen);
     drawBtn(m_btnSettingsBack);
 
-    drawText(std::format("Lautstaerke: {}%", static_cast<int>(m_volume * 100)), m_volumeSliderBg.x, m_volumeSliderBg.y - 30.0f, {200, 200, 200, 255}, m_fontLarge.get());
+    drawText(std::format("Lautstärke: {}%", static_cast<int>(m_volume * 100)), m_volumeSliderBg.x, m_volumeSliderBg.y - 30.0f, {200, 200, 200, 255}, m_fontLarge.get());
 
     SDL_SetRenderDrawColor(m_renderer.get(), 30, 30, 45, 255);
     SDL_RenderFillRect(m_renderer.get(), &m_volumeSliderBg);
@@ -117,73 +117,110 @@ void Visualizer::drawSettings()
 void Visualizer::drawBarsView()
 {
     std::lock_guard lock(m_mutex);
-    if (m_array.empty()) return;
+    if (m_array.empty() || m_history.empty()) return;
 
     const int32_t maxVal = std::ranges::max(m_array);
     const float   barW   = VIS_W / static_cast<float>(m_array.size());
+    const float   fixedTopPadding = 50.0f;
+    const float   effectiveVisHeight = VIS_H - fixedTopPadding;
+
+    bool isFinished = (m_threadFinished && m_history.size() > 1 && m_historyIndex == static_cast<int32_t>(m_history.size()) - 1);
+
+    std::vector<bool> touched(m_array.size(), false);
+
+    if (m_historyIndex > 0 && m_historyIndex < m_history.size()) {
+        for (int32_t s = 1; s <= m_historyIndex; ++s) {
+            int a = m_history[s].indexA;
+            int b = m_history[s].indexB;
+            if (a >= 0 && a < touched.size()) touched[a] = true;
+            if (b >= 0 && b < touched.size()) touched[b] = true;
+
+            const auto& prevArr = m_history[s-1].array;
+            const auto& currArr = m_history[s].array;
+            size_t minLen = std::min(prevArr.size(), currArr.size());
+            for (size_t j = 0; j < minLen; ++j) {
+                if (currArr[j] != prevArr[j] && j < touched.size()) {
+                    touched[j] = true;
+                }
+            }
+        }
+    }
 
     for (int32_t i = 0; i < static_cast<int32_t>(m_array.size()); ++i)
     {
-        const float barH = (static_cast<float>(m_array[i]) / static_cast<float>(maxVal)) * VIS_H;
+        const float barH = (static_cast<float>(m_array[i]) / static_cast<float>(maxVal)) * effectiveVisHeight;
         const float bx   = VIS_X + i * barW;
         const float by   = VIS_Y + VIS_H - barH;
 
-        if      (i == m_highlightA) SDL_SetRenderDrawColor(m_renderer.get(), 255,  80,  80, 255);
-        else if (i == m_highlightB) SDL_SetRenderDrawColor(m_renderer.get(), 255, 220,  50, 255);
-        else                        SDL_SetRenderDrawColor(m_renderer.get(),  80, 160, 255, 255);
+        bool shouldBeGreen = isFinished;
+        if (!shouldBeGreen && m_threadFinished && i < m_finalStepForIndex.size()) {
+            if (m_historyIndex > m_finalStepForIndex[i] && touched[i]) {
+                shouldBeGreen = true;
+            }
+        }
+
+        if (i == m_highlightA && !isFinished) {
+            SDL_SetRenderDrawColor(m_renderer.get(), 255, 60, 60, 255);
+        } else if (i == m_highlightB && !isFinished) {
+            SDL_SetRenderDrawColor(m_renderer.get(), 255, 220, 50, 255);
+        } else if (shouldBeGreen) {
+            SDL_SetRenderDrawColor(m_renderer.get(), 40, 200, 80, 255);
+        } else {
+            SDL_SetRenderDrawColor(m_renderer.get(), 55, 55, 75, 255);
+        }
 
         SDL_FRect barRect{bx + 1.0f, by, barW - 2.0f, barH};
         SDL_RenderFillRect(m_renderer.get(), &barRect);
 
-        if (barW > 28.0f)
-            drawText(std::format("{}", m_array[i]), bx + 2.0f, by - 15.0f,
-                     {220, 220, 220, 255}, m_fontTiny.get());
-    }
+        if (barW > 28.0f) {
+            SDL_Color textColor;
+            if (shouldBeGreen) textColor = {200, 255, 200, 255};
+            else if (i == m_highlightA || i == m_highlightB) textColor = {255, 255, 255, 255};
+            else textColor = {150, 150, 160, 255};
 
-    drawText(m_actionText, VIS_X, VIS_Y + VIS_H + 4.0f,
-             {200, 200, 200, 255}, m_fontTiny.get());
-
-    if (!m_history.empty() && m_historyIndex >= 0)
-    {
-        drawText(std::format("Schritt {}/{}",
-                             m_historyIndex + 1,
-                             static_cast<int32_t>(m_history.size())),
-                 VIS_X + 400.0f, VIS_Y + VIS_H + 4.0f,
-                 {150, 200, 255, 255}, m_fontTiny.get());
+            drawText(std::format("{}", m_array[i]), bx + 2.0f, by - 15.0f, textColor, m_fontTiny.get());
+        }
     }
 }
 
-// ── DIE ZAHLEN-ANSICHT MIT SICHTBAREN SCROLLBALKEN ───────────
 void Visualizer::drawNumbersView()
 {
     constexpr float lineH = 26.0f;
     constexpr float numW  = 40.0f;
     const float startArrayX = VIS_X + 45.0f;
 
-    int32_t histSize{};
+    int32_t visibleHistSize = 0;
+    int32_t fullHistSize = 0;
     int32_t currentArraySize = 0;
+
+    std::vector<int32_t> sortedTarget;
+    std::vector<int32_t> initialArray;
+
     {
         std::lock_guard lock(m_mutex);
-        histSize = static_cast<int32_t>(m_history.size());
+        if (m_history.empty()) return;
+        fullHistSize = static_cast<int32_t>(m_history.size());
+        // WICHTIG: Die GUI darf nur bis zum aktuellen Playback-Schritt in die Zukunft sehen!
+        visibleHistSize = std::clamp(m_historyIndex + 1, 1, fullHistSize);
         currentArraySize = m_array.size();
+        sortedTarget = m_history.front().array;
+        initialArray = m_history.front().array;
     }
-    if (histSize == 0) return;
+
+    std::ranges::sort(sortedTarget);
 
     const int32_t maxLines = static_cast<int32_t>(VIS_H / lineH);
-
-    // Vertikales Scrolling (Einheitlich Top-Down)
-    int32_t maxScrollY = std::max(0, histSize - maxLines);
+    int32_t maxScrollY = std::max(0, visibleHistSize - maxLines);
 
     if (m_autoScrollNumbers) {
         if (m_liveMode && m_sorting) {
-            m_numbersScrollY = maxScrollY;
+            m_numbersScrollY = maxScrollY; // Scrollt mit dem Player mit
         } else if (m_historyIndex >= 0) {
             m_numbersScrollY = std::clamp(m_historyIndex - maxLines / 2, 0, maxScrollY);
         }
     }
     m_numbersScrollY = std::clamp(m_numbersScrollY, 0, maxScrollY);
 
-    // Horizontales Scrolling
     float maxItemWidth = currentArraySize * numW + 600.0f;
     float maxScrollX = std::max(0.0f, maxItemWidth - VIS_W);
     m_numbersScrollX = std::clamp(m_numbersScrollX, 0.0f, maxScrollX);
@@ -194,21 +231,51 @@ void Visualizer::drawNumbersView()
     SDL_Rect clipRect = { static_cast<int>(VIS_X), static_cast<int>(VIS_Y), static_cast<int>(VIS_W), static_cast<int>(VIS_H) };
     SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
 
-    // Zahlen zeichnen
-    for (int32_t s = startIdx; s < std::min(histSize, startIdx + maxLines); ++s)
+    std::vector<bool> touched(currentArraySize, false);
+    for (int32_t s = 1; s <= startIdx && s < visibleHistSize; ++s) {
+        std::lock_guard lock(m_mutex);
+        int a = m_history[s].indexA;
+        int b = m_history[s].indexB;
+        if (a >= 0 && a < touched.size()) touched[a] = true;
+        if (b >= 0 && b < touched.size()) touched[b] = true;
+        const auto& prevArr = m_history[s-1].array;
+        const auto& currArr = m_history[s].array;
+        size_t minLen = std::min(prevArr.size(), currArr.size());
+        for (size_t j = 0; j < minLen; ++j) {
+            if (currArr[j] != prevArr[j] && j < touched.size()) touched[j] = true;
+        }
+    }
+
+    // Schleife geht nur bis max. visibleHistSize
+    for (int32_t s = startIdx; s < std::min(visibleHistSize, startIdx + maxLines); ++s)
     {
         SortStep step;
         {
             std::lock_guard lock(m_mutex);
-            if (s >= static_cast<int32_t>(m_history.size())) break;
             step = m_history[s];
+        }
+
+        if (s > 0) {
+            std::lock_guard lock(m_mutex);
+            int a = step.indexA;
+            int b = step.indexB;
+            if (a >= 0 && a < touched.size()) touched[a] = true;
+            if (b >= 0 && b < touched.size()) touched[b] = true;
+
+            const auto& prevArr = m_history[s-1].array;
+            const auto& currArr = step.array;
+            size_t minLen = std::min(prevArr.size(), currArr.size());
+            for (size_t j = 0; j < minLen; ++j) {
+                if (currArr[j] != prevArr[j] && j < touched.size()) touched[j] = true;
+            }
         }
 
         const auto& [array, indexA, indexB, action] = step;
         const float   fy = VIS_Y + (s - startIdx) * lineH;
         const int32_t n  = static_cast<int32_t>(array.size());
 
-        const bool isCur = m_liveMode ? (s == histSize - 1) : (s == m_historyIndex && m_historyIndex >= 0);
+        const bool isCur = (s == m_historyIndex); // Jetzt ist isCur exakt da, wo der Player steht!
+        const bool lineIsFinished = (m_threadFinished && fullHistSize > 1 && s == fullHistSize - 1);
 
         if (isCur) {
             SDL_SetRenderDrawColor(m_renderer.get(), 40, 40, 70, 255);
@@ -225,18 +292,32 @@ void Visualizer::drawNumbersView()
             if (fx > VIS_X + VIS_W) break;
             if (fx + numW < startArrayX - 10.0f) continue;
 
-            if (i == indexA || i == indexB) {
+            if (!lineIsFinished && (i == indexA || i == indexB)) {
                 SDL_SetRenderDrawColor(m_renderer.get(),
-                    i == indexA ? 160 : 160, i == indexA ?  30 : 140, i == indexA ?  30 :  20, 255);
+                    i == indexA ? 200 : 180, i == indexA ?  60 : 180, i == indexA ?  60 :  40, 255);
                 SDL_FRect highlightRect{fx - 2.0f, fy + 2.0f, numW - 2.0f, lineH - 4.0f};
                 SDL_RenderFillRect(m_renderer.get(), &highlightRect);
             }
-            drawText(std::format("{}", array[i]), fx, fy + 4.0f,
-                     (i == indexA || i == indexB) ? SDL_Color{255,255,100,255} : SDL_Color{200,200,200,255},
-                     m_fontTiny.get());
+
+            bool isTouchedNow = false;
+            if (i < touched.size()) isTouchedNow = touched[i];
+
+            bool shouldBeGreen = lineIsFinished;
+            if (!shouldBeGreen && m_threadFinished && i < m_finalStepForIndex.size()) {
+                if (s > m_finalStepForIndex[i] && touched[i]) {
+                    shouldBeGreen = true;
+                }
+            }
+
+            SDL_Color textColor;
+            if (shouldBeGreen) textColor = {100, 255, 100, 255};
+            else if (!lineIsFinished && (i == indexA || i == indexB)) textColor = {255, 255, 255, 255};
+            else textColor = {130, 130, 140, 255};
+
+            drawText(std::format("{}", array[i]), fx, fy + 4.0f, textColor, m_fontTiny.get());
         }
 
-        if (indexA >= 0 && indexB >= 0 && indexA != indexB)
+        if (!lineIsFinished && indexA >= 0 && indexB >= 0 && indexA != indexB)
         {
             const float ax  = startArrayX + indexA * numW + numW * 0.5f + offsetX;
             const float bx2 = startArrayX + indexB * numW + numW * 0.5f + offsetX;
@@ -251,28 +332,26 @@ void Visualizer::drawNumbersView()
 
         const float actionX = startArrayX + n * numW + 8.0f + offsetX;
         if (actionX < VIS_X + VIS_W) {
-            drawText(action, actionX, fy + 4.0f, {100, 190, 100, 255}, m_fontTiny.get());
+            drawText(action, actionX, fy + 4.0f, lineIsFinished ? SDL_Color{100, 255, 100, 255} : SDL_Color{100, 190, 100, 255}, m_fontTiny.get());
         }
     }
 
     SDL_SetRenderClipRect(m_renderer.get(), nullptr);
 
-    // ── SICHTBARER VERTIKALER SCROLLBALKEN (LINKS) ──
-    if (histSize > maxLines) {
+    if (visibleHistSize > maxLines) {
         const float sbX = VIS_X + VIS_W - 6.0f;
-        const float sbH = VIS_H - 10.0f; // Etwas Platz unten für den horizontalen
+        const float sbH = VIS_H - 10.0f;
         SDL_SetRenderDrawColor(m_renderer.get(), 35, 35, 55, 255);
         SDL_FRect sbRect{sbX, VIS_Y, 4.0f, sbH};
         SDL_RenderFillRect(m_renderer.get(), &sbRect);
 
-        const float thumbH = std::max(sbH * static_cast<float>(maxLines) / histSize, 8.0f);
-        const float thumbPos = sbH * static_cast<float>(m_numbersScrollY) / histSize;
+        const float thumbH = std::max(sbH * static_cast<float>(maxLines) / visibleHistSize, 8.0f);
+        const float thumbPos = sbH * static_cast<float>(m_numbersScrollY) / visibleHistSize;
         SDL_SetRenderDrawColor(m_renderer.get(), 100, 140, 200, 255);
         SDL_FRect thumbRect{sbX, VIS_Y + thumbPos, 4.0f, thumbH};
         SDL_RenderFillRect(m_renderer.get(), &thumbRect);
     }
 
-    // ── SICHTBARER HORIZONTALER SCROLLBALKEN (LINKS) ──
     if (maxScrollX > 0.0f) {
         const float sbY = VIS_Y + VIS_H - 6.0f;
         const float sbW = VIS_W - 10.0f;
@@ -299,27 +378,30 @@ void Visualizer::drawExplanationPanel()
     constexpr SDL_Color colCurrent {255, 220,  60, 255};
     constexpr SDL_Color colOld     {140, 160, 180, 255};
 
-    drawText("Schritt-Erklaerung:", panelX, panelY, colTitle, m_fontSmall.get());
+    drawText("Schritt-Erklärung:", panelX, panelY, colTitle, m_fontSmall.get());
 
-    int32_t histSize{};
-    { std::lock_guard lock(m_mutex);
-      histSize = static_cast<int32_t>(m_history.size()); }
-    if (histSize == 0) return;
+    int32_t visibleHistSize = 0;
+    int32_t fullHistSize = 0;
+    {
+        std::lock_guard lock(m_mutex);
+        if (m_history.empty()) return;
+        fullHistSize = static_cast<int32_t>(m_history.size());
+        // Auch hier die Kristallkugel verdecken:
+        visibleHistSize = std::clamp(m_historyIndex + 1, 1, fullHistSize);
+    }
 
     const int32_t maxLines = static_cast<int32_t>((panelEnd - panelY - 20.0f) / lineH);
-    const int32_t curIdx   = m_liveMode ? histSize - 1 : std::max(0, m_historyIndex);
+    const int32_t curIdx   = m_historyIndex;
 
-    // Vertikales Scrollen (Einheitlich Top-Down)
-    const int32_t maxScrollY = std::max(0, histSize - maxLines);
+    const int32_t maxScrollY = std::max(0, visibleHistSize - maxLines);
     if (m_autoScrollNumbers) m_explanationScrollY = maxScrollY;
     m_explanationScrollY = std::clamp(m_explanationScrollY, 0, maxScrollY);
 
-    // Horizontales Scrollen
-    float maxExpScrollX = std::max(0.0f, 1500.0f - METRICS_W); // Geschätzte max. Textbreite
+    float maxExpScrollX = std::max(0.0f, 1500.0f - METRICS_W);
     m_explanationScrollX = std::clamp(m_explanationScrollX, 0.0f, maxExpScrollX);
 
     const int32_t startIdx = m_explanationScrollY;
-    const int32_t endIdx   = std::min(histSize, startIdx + maxLines);
+    const int32_t endIdx   = std::min(visibleHistSize, startIdx + maxLines);
 
     SDL_Rect clipRect = { static_cast<int>(MET_X), static_cast<int>(panelY + 18.0f), static_cast<int>(METRICS_W), static_cast<int>(MET_H - panelY - 18.0f) };
     SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
@@ -329,7 +411,6 @@ void Visualizer::drawExplanationPanel()
     {
         SortStep step;
         { std::lock_guard lock(m_mutex);
-          if (s >= static_cast<int32_t>(m_history.size())) break;
           step = m_history[s]; }
 
         const bool isCur = (s == curIdx);
@@ -350,8 +431,7 @@ void Visualizer::drawExplanationPanel()
 
     SDL_SetRenderClipRect(m_renderer.get(), nullptr);
 
-    // ── SICHTBARER VERTIKALER SCROLLBALKEN (RECHTS) ──
-    if (histSize > maxLines)
+    if (visibleHistSize > maxLines)
     {
         const float sbX = static_cast<float>(WIN_W) - 6.0f;
         const float sbH = panelEnd - panelY - 20.0f;
@@ -359,14 +439,13 @@ void Visualizer::drawExplanationPanel()
         SDL_FRect sbRect{sbX, panelY + 20.0f, 4.0f, sbH};
         SDL_RenderFillRect(m_renderer.get(), &sbRect);
 
-        const float thumbH   = std::max(sbH * static_cast<float>(maxLines) / histSize, 8.0f);
-        const float thumbPos = sbH * static_cast<float>(m_explanationScrollY) / histSize;
+        const float thumbH   = std::max(sbH * static_cast<float>(maxLines) / visibleHistSize, 8.0f);
+        const float thumbPos = sbH * static_cast<float>(m_explanationScrollY) / visibleHistSize;
         SDL_SetRenderDrawColor(m_renderer.get(), 100, 140, 200, 255);
         SDL_FRect thumbRect{sbX, panelY + 20.0f + thumbPos, 4.0f, thumbH};
         SDL_RenderFillRect(m_renderer.get(), &thumbRect);
     }
 
-    // ── SICHTBARER HORIZONTALER SCROLLBALKEN (RECHTS) ──
     if (maxExpScrollX > 0.0f) {
         const float sbX = MET_X + 4.0f;
         const float sbY = panelEnd;
@@ -428,19 +507,45 @@ void Visualizer::drawButtons()
 
     {
       SDL_FRect r{m_stopButton.x, m_stopButton.y, m_stopButton.w, m_stopButton.h};
-      SDL_SetRenderDrawColor(m_renderer.get(), m_sorting ? 180 : 35,
-                                               m_sorting ?  40 : 35,
-                                               m_sorting ?  40 : 45, 255);
+      bool canInteract = m_sorting;
+      bool isPaused = m_sorting && !m_liveMode;
+
+      if (!canInteract) {
+          SDL_SetRenderDrawColor(m_renderer.get(), 35, 35, 45, 255);
+      } else if (isPaused) {
+          SDL_SetRenderDrawColor(m_renderer.get(), 40, 180, 80, 255);
+      } else {
+          SDL_SetRenderDrawColor(m_renderer.get(), 200, 120, 30, 255);
+      }
       SDL_RenderFillRect(m_renderer.get(), &r);
-      SDL_SetRenderDrawColor(m_renderer.get(), 160, 80, 80, 255);
+      SDL_SetRenderDrawColor(m_renderer.get(), canInteract ? 160 : 70, canInteract ? 160 : 70, canInteract ? 180 : 80, 255);
       SDL_RenderRect(m_renderer.get(), &r);
-      drawText(m_stopButton.label, m_stopButton.x + 8.0f, m_stopButton.y + 12.0f,
-               m_sorting ? SDL_Color{255,200,200,255} : SDL_Color{90,70,70,255},
+
+      std::string label = (m_sorting && !m_liveMode) ? "Weiter" : "Pause";
+      drawText(label, m_stopButton.x + 20.0f, m_stopButton.y + 12.0f,
+               canInteract ? SDL_Color{255,255,255,255} : SDL_Color{90,70,70,255},
                m_fontLarge.get());
     }
 
-    const bool canFwd  = !m_liveMode && (!m_sorting || !m_threadFinished ||
-                          m_historyIndex < static_cast<int32_t>(m_history.size()) - 1);
+    {
+      SDL_FRect r{m_cancelButton.x, m_cancelButton.y, m_cancelButton.w, m_cancelButton.h};
+      bool canCancel = (m_sorting || m_historyIndex > 0);
+
+      if (!canCancel) {
+          SDL_SetRenderDrawColor(m_renderer.get(), 35, 35, 45, 255);
+      } else {
+          SDL_SetRenderDrawColor(m_renderer.get(), 180, 40, 40, 255);
+      }
+      SDL_RenderFillRect(m_renderer.get(), &r);
+      SDL_SetRenderDrawColor(m_renderer.get(), canCancel ? 160 : 70, canCancel ? 160 : 70, canCancel ? 180 : 80, 255);
+      SDL_RenderRect(m_renderer.get(), &r);
+
+      drawText("Abbruch", m_cancelButton.x + 15.0f, m_cancelButton.y + 12.0f,
+               canCancel ? SDL_Color{255,220,220,255} : SDL_Color{90,70,70,255},
+               m_fontLarge.get());
+    }
+
+    const bool canFwd  = !m_liveMode && (m_historyIndex < static_cast<int32_t>(m_history.size()) - 1 || !m_sorting);
     const bool canBack = m_historyIndex > 0 && !m_liveMode;
 
     drawBtn(m_stepFwdButton,  canFwd);
@@ -457,7 +562,6 @@ void Visualizer::drawButtons()
              {200, 200, 200, 255}, m_fontLarge.get());
 }
 
-// ── HAUPT-ZEICHENFUNKTION (ROUTING) ──────────────────────────
 void Visualizer::draw()
 {
     SDL_SetRenderDrawColor(m_renderer.get(), 22, 22, 32, 255);

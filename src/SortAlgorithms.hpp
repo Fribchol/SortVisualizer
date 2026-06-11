@@ -103,4 +103,7 @@ namespace SortAlgorithms
     void heapSort    (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
     void radixSort   (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
     void countingSort(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
+
+    // NEU hinzugefügt:
+    void bubbleSort  (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
 }
