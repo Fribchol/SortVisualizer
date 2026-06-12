@@ -149,7 +149,7 @@ void Visualizer::drawBarsView()
     for (int32_t i = 0; i < static_cast<int32_t>(m_array.size()); ++i)
     {
         const float barH = (static_cast<float>(m_array[i]) / static_cast<float>(maxVal)) * effectiveVisHeight;
-        const float bx   = VIS_X + i * barW;
+        const float bx   = VIS_X + i * barW ;
         const float by   = VIS_Y + VIS_H - barH;
 
         bool shouldBeGreen = isFinished;
