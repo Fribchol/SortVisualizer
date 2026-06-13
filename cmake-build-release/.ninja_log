@@ -55,3 +55,8 @@
 9137	14997	8030920632488528	CMakeFiles/SortVisualizer.dir/src/algorithms/BubbleSort.cpp.obj	37bcb7bd901783a7
 8992	15448	8030920631050688	CMakeFiles/SortVisualizer.dir/src/algorithms/CountingSort.cpp.obj	c884d1763315a619
 15448	15997	8030920695594365	SortVisualizer.exe	6d93b0f789249955
+42	4656	8030927116290079	CMakeFiles/SortVisualizer.dir/src/VisualizerEvents.cpp.obj	45d8c87981d5e70a
+21	4805	8030927116079343	CMakeFiles/SortVisualizer.dir/src/VisualizerDraw.cpp.obj	eeabfa44f142019c
+4806	5363	8030927163926678	SortVisualizer.exe	6d93b0f789249955
+22	2605	8030929384020912	CMakeFiles/SortVisualizer.dir/src/VisualizerEvents.cpp.obj	45d8c87981d5e70a
+2607	3120	8030929409870773	SortVisualizer.exe	6d93b0f789249955

@@ -13,11 +13,10 @@
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <cstdlib>
-#include <format>
 #include <cstdint> // Für explizite Integer-Typen
+#include <thread>  // Für std::this_thread::sleep_for
 
 // ── Anonymer Namespace ──────────────────────────────────────
-// Konstanten sauber für diese Translation-Unit kapseln.
 namespace {
     constexpr float MET_X = 1400.0f - 380.0f; // WIN_W - METRICS_W
 }
@@ -140,19 +139,18 @@ void Visualizer::handleButtonClick(float mx, float my) {
             cancelSort();
         }
     }
-    // ── SPEED BUTTONS KLICK-LOGIK (DYNAMISCH) ──
     else if (isInside(mx, my, m_speedDownButton)) {
         if (m_delayMs >= 100)      m_delayMs += 50;
         else if (m_delayMs >= 20)  m_delayMs += 10;
         else if (m_delayMs >= 5)   m_delayMs += 5;
         else                       m_delayMs += 1;
-        if (m_delayMs > 1000)      m_delayMs = 1000; // Obergrenze: 1 Sekunde pro Schritt
+        if (m_delayMs > 1000)      m_delayMs = 1000;
     }
     else if (isInside(mx, my, m_speedUpButton)) {
         if (m_delayMs > 100)       m_delayMs -= 50;
         else if (m_delayMs > 20)   m_delayMs -= 10;
         else if (m_delayMs > 5)    m_delayMs -= 5;
-        else if (m_delayMs > 1)    m_delayMs -= 1; // Untergrenze: 1 ms (rasend schnell)
+        else if (m_delayMs > 1)    m_delayMs -= 1;
     }
     else if (isInside(mx, my, m_stepBackButton)) {
         m_autoScrollNumbers = true;
@@ -160,6 +158,18 @@ void Visualizer::handleButtonClick(float mx, float my) {
     }
     else if (isInside(mx, my, m_stepFwdButton)) {
         m_autoScrollNumbers = true;
+
+        // Startet Thread heimlich, falls noch nichts läuft
+        if (!m_sorting && m_historyIndex == 0 && m_history.size() <= 1) {
+            startStepping();
+            for (std::int32_t i = 0; i < 50; ++i) {
+                {
+                    std::lock_guard lock(m_mutex);
+                    if (m_history.size() > 1 || m_threadFinished) break;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
         stepForward();
     }
     else if (!m_sorting && isInside(mx, my, m_randomButton)) {
@@ -182,20 +192,10 @@ void Visualizer::handleButtonClick(float mx, float my) {
         m_viewMode = ViewMode::Numbers;
         m_autoScrollNumbers = true;
     }
+    // ── ANPASSUNG: Benchmark-Button öffnet nur noch die Shell ──
     else if (isInside(mx, my, m_btnBenchmark)) {
-        std::string algoStr;
-        switch (m_algorithm) {
-            case Algorithm::QuickSort:    algoStr = "quicksort"; break;
-            case Algorithm::MergeSortRec: algoStr = "mergesort"; break;
-            case Algorithm::MergeSortIt:  algoStr = "mergesort_it"; break;
-            case Algorithm::HeapSort:     algoStr = "heapsort"; break;
-            case Algorithm::RadixSort:    algoStr = "radixsort"; break;
-            case Algorithm::CountingSort: algoStr = "countingsort"; break;
-            case Algorithm::BubbleSort:   algoStr = "bubblesort"; break;
-        }
-
-        std::string cmd = std::format("start cmd /k \".\\SortVisualizer.exe --cli --algo {} --size 1000000\"", algoStr);
-        std::system(cmd.c_str());
+        // Öffnet ein leeres Windows-Terminal im aktuellen Verzeichnis
+        std::system("start cmd");
     }
 }
 

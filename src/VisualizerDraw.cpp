@@ -21,7 +21,6 @@
 #include <cstdint> // Für explizite Integer-Typen
 
 // ── Anonymer Namespace ──────────────────────────────────────
-// Kapselt Layout-Konstanten und SDL-Deleter strikt in dieser Datei.
 namespace {
     constexpr std::int32_t WIN_W     = 1400;
     constexpr std::int32_t WIN_H     = 860;
@@ -34,7 +33,6 @@ namespace {
     constexpr float        MET_X     = WIN_W - METRICS_W;
     constexpr float        MET_H     = WIN_H - UI_H;
 
-    // RAII Deleter für SDL-Ressourcen
     struct SdlSurfaceDeleter { void operator()(SDL_Surface* s) const noexcept { SDL_DestroySurface(s); } };
     struct SdlTextureDeleter { void operator()(SDL_Texture* t) const noexcept { SDL_DestroyTexture(t); } };
 
@@ -46,12 +44,11 @@ void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color col
 {
     if (text.empty() || !font) return;
 
-    // Moderne RAII-Verwaltung der rohen C-Pointer von SDL
     SurfacePtr surf{ TTF_RenderText_Blended(font, std::string(text).c_str(), 0, color) };
     if (!surf) return;
 
     TexturePtr tex{ SDL_CreateTextureFromSurface(m_renderer.get(), surf.get()) };
-    surf.reset(); // Surface wird nicht mehr benötigt
+    surf.reset();
     if (!tex) return;
 
     float tw{}, th{};
@@ -567,7 +564,8 @@ void Visualizer::drawButtons()
                m_fontLarge.get());
     }
 
-    const bool canFwd  = !m_liveMode && (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1 || !m_sorting);
+    // ── ANPASSUNG: Der Vorwärts-Button wird grau, wenn das Ende der History erreicht ist ──
+    const bool canFwd  = !m_liveMode && (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1 || (!m_sorting && m_historyIndex == 0 && m_history.size() <= 1));
     const bool canBack = m_historyIndex > 0 && !m_liveMode;
 
     drawBtn(m_stepFwdButton,  canFwd);
