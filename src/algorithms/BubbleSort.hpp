@@ -1,3 +1,6 @@
+// ============================================================
+// BubbleSort.hpp
+// ============================================================
 #pragma once
 
 #include <vector>
@@ -6,5 +9,6 @@
 
 namespace Algorithms
 {
-    void bubbleSort(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& metrics);
+    // ── Modern C++20: Explizite Standard-Typen (std::int32_t) ──
+    void bubbleSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& metrics);
 }

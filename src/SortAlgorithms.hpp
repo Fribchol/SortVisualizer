@@ -2,17 +2,18 @@
 // SortAlgorithms.hpp
 // Zentrale Typen, Structs und Dispatcher-Deklarationen
 //
-// C++20 Features:
+// C++20 Features & Modernisierungen:
 // ┌─────────────────┬──────────────────────────────────────────┐
-// │ [[nodiscard]]   │ Warnung wenn Rückgabe ignoriert wird     │
-// │ string_view     │ String ohne Kopie übergeben              │
+// │ std::int32_t    │ Explizite Typen aus <cstdint>            │
+// │ [[nodiscard]]   │ Warnung, wenn Rückgabe ignoriert wird    │
+// │ std::string_view│ String ohne Kopie übergeben              │
 // │ using Alias     │ Moderner Ersatz für typedef              │
 // │ Member-Init     │ Default-Werte direkt im Struct           │
 // └─────────────────┴──────────────────────────────────────────┘
 // ============================================================
 #pragma once
 
-#include <cstdint>      // int32_t, uint64_t → exakte Typen statt int
+#include <cstdint>      // std::int32_t, std::uint64_t → exakte Typen statt int
 #include <functional>   // std::function → typsichere Callbacks
 #include <string>       // std::string
 #include <string_view>  // std::string_view → kein Kopieren
@@ -24,15 +25,15 @@
 // ── Aggregate Initialization (C++20) ─────────────────────────
 // Kein Konstruktor nötig. Direkte {}-Initialisierung:
 //   SortStep s{arr, 2, 5, "Tausch"};
-// ── Member Default-Werte ──────────────────────────────────────
+// ── Member Default-Werte ─────────────────────────────────────
 // {-1} bedeutet: kein Index markiert
 // ============================================================
 struct SortStep
 {
-    std::vector<int32_t> array;       // Array-Zustand in diesem Schritt
-    int32_t              indexA{-1};  // erster markierter Index
-    int32_t              indexB{-1};  // zweiter markierter Index
-    std::string          action;      // z.B. "Tausch [2]=17 <-> [5]=43"
+    std::vector<std::int32_t> array;       // Array-Zustand in diesem Schritt
+    std::int32_t              indexA{-1};  // erster markierter Index
+    std::int32_t              indexB{-1};  // zweiter markierter Index
+    std::string               action;      // z.B. "Tausch [2]=17 <-> [5]=43"
 };
 
 // ============================================================
@@ -54,16 +55,16 @@ struct AlgoInfo
 // ============================================================
 // LiveMetrics – Live gemessene Werte während der Sortierung
 //
-// ── uint64_t statt int ────────────────────────────────────────
-// uint64_t: 64-bit unsigned → kein Überlauf bei großen Arrays
+// ── std::uint64_t statt int ──────────────────────────────────
+// std::uint64_t: 64-bit unsigned → kein Überlauf bei großen Arrays
 // Aus <cstdint>: exakte Größe garantiert auf jeder Plattform
 // ============================================================
 struct LiveMetrics
 {
-    uint64_t comparisons   {0};   // Anzahl Vergleiche
-    uint64_t swaps         {0};   // Anzahl Tauschoperationen
-    uint64_t arrayAccesses {0};   // Anzahl Array-Zugriffe
-    double   elapsedMs     {0.0}; // gemessene Zeit in ms
+    std::uint64_t comparisons   {0};   // Anzahl Vergleiche
+    std::uint64_t swaps         {0};   // Anzahl Tauschoperationen
+    std::uint64_t arrayAccesses {0};   // Anzahl Array-Zugriffe
+    double        elapsedMs     {0.0}; // gemessene Zeit in ms
 };
 
 // ============================================================
@@ -74,36 +75,34 @@ struct LiveMetrics
 // Modern: using StepCallback = std::function<void(...)>;
 // Vorteil: lesbarer, funktioniert mit Templates
 //
-// ── std::string_view statt const std::string& ─────────────────
+// ── std::string_view statt const std::string& ────────────────
 // string_view = "Blick" auf einen String ohne Kopie.
 // Kein Heap-Alloc, kein Overhead. Perfekt für read-only Strings.
 // ============================================================
 using StepCallback = std::function<void(
-    const std::vector<int32_t>& arr,  // aktueller Array-Zustand
-    int32_t                     a,    // erster markierter Index
-    int32_t                     b,    // zweiter markierter Index
-    std::string_view            action // Beschreibung des Schritts
+    const std::vector<std::int32_t>& arr,    // aktueller Array-Zustand
+    std::int32_t                     a,      // erster markierter Index
+    std::int32_t                     b,      // zweiter markierter Index
+    std::string_view                 action  // Beschreibung des Schritts
 )>;
 
 // ============================================================
 // SortAlgorithms Namespace
 //
 // ── [[nodiscard]] (C++17/20) ─────────────────────────────────
-// Compiler warnt wenn Rückgabewert ignoriert wird:
+// Compiler warnt, wenn Rückgabewert ignoriert wird:
 //   getInfo(i);              // ← Compiler-Warnung!
 //   AlgoInfo info = getInfo(i); // ← korrekt
 // ============================================================
 namespace SortAlgorithms
 {
-    [[nodiscard]] AlgoInfo getInfo(uint8_t algorithmIndex);
+    [[nodiscard]] AlgoInfo getInfo(std::uint8_t algorithmIndex);
 
-    void quickSort   (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
-    void mergeSort   (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
-    void mergeSortIt (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
-    void heapSort    (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
-    void radixSort   (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
-    void countingSort(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
-
-    // NEU hinzugefügt:
-    void bubbleSort  (std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void quickSort   (std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void mergeSort   (std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void mergeSortIt (std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void heapSort    (std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void radixSort   (std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void countingSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    void bubbleSort  (std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
 }

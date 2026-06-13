@@ -1,5 +1,14 @@
 // ============================================================
 // Visualizer.hpp – Hauptklasse
+//
+// C++20 Features & Modernisierungen:
+// ┌──────────────────────┬─────────────────────────────────────┐
+// │ std::int32_t         │ Explizite Typen aus <cstdint>       │
+// │ std::uint8_t         │ Standardisierte Enum-Basistypen     │
+// │ [[nodiscard]]        │ Für Getter- und Prüffunktionen      │
+// │ Rule of 5            │ Explizit gelöschte Move/Copy Semantik│
+// │ RAII                 │ Deleter für rohe SDL-Ressourcen     │
+// └──────────────────────┴─────────────────────────────────────┘
 // ============================================================
 #pragma once
 
@@ -8,7 +17,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -18,9 +26,9 @@
 #include "SortAlgorithms.hpp"
 
 // ── App Status ───────────────────────────────────────────────
-enum class AppState  : uint8_t { MainMenu, Settings, Visualizer };
-enum class ViewMode  : uint8_t { Bars, Numbers };
-enum class Algorithm : uint8_t
+enum class AppState  : std::uint8_t { MainMenu, Settings, Visualizer };
+enum class ViewMode  : std::uint8_t { Bars, Numbers };
+enum class Algorithm : std::uint8_t
 {
     QuickSort, MergeSortRec, MergeSortIt,
     HeapSort,  RadixSort,    CountingSort, BubbleSort
@@ -34,6 +42,7 @@ struct Button
     bool        active{false};
 };
 
+// ── RAII Deleter für Smart Pointer ────────────────────────────
 struct SdlWindowDeleter   { void operator()(SDL_Window* w) const noexcept { SDL_DestroyWindow(w);   } };
 struct SdlRendererDeleter { void operator()(SDL_Renderer* r) const noexcept { SDL_DestroyRenderer(r); } };
 struct TtfFontDeleter     { void operator()(TTF_Font* f) const noexcept { TTF_CloseFont(f);       } };
@@ -44,10 +53,12 @@ public:
     Visualizer();
     ~Visualizer();
 
+    // ── Rule of 5: Weder kopierbar noch verschiebbar ──────────
+    // std::mutex und std::atomic verbieten das Verschieben (Move).
     Visualizer(const Visualizer&)            = delete;
     Visualizer& operator=(const Visualizer&) = delete;
-    Visualizer(Visualizer&&)                 = default;
-    Visualizer& operator=(Visualizer&&)      = default;
+    Visualizer(Visualizer&&)                 = delete;
+    Visualizer& operator=(Visualizer&&)      = delete;
 
     void run();
 
@@ -69,17 +80,17 @@ private:
     SDL_FRect   m_volumeSliderBg{};
 
     // ── Array & Zustand ───────────────────────────────────────
-    std::vector<int32_t> m_array;
-    Algorithm   m_algorithm {Algorithm::QuickSort};
-    ViewMode    m_viewMode  {ViewMode::Bars};
-    int32_t     m_arraySize {20};
-    bool        m_running   {true};
-    bool        m_sorting   {false};
-    int32_t     m_highlightA{-1};
-    int32_t     m_highlightB{-1};
-    uint32_t    m_delayMs   {10};
-    std::string m_actionText;
-    bool        m_liveMode  {false};
+    std::vector<std::int32_t> m_array;
+    Algorithm     m_algorithm {Algorithm::QuickSort};
+    ViewMode      m_viewMode  {ViewMode::Bars};
+    std::int32_t  m_arraySize {20};
+    bool          m_running   {true};
+    bool          m_sorting   {false};
+    std::int32_t  m_highlightA{-1};
+    std::int32_t  m_highlightB{-1};
+    std::uint32_t m_delayMs   {10};
+    std::string   m_actionText;
+    bool          m_liveMode  {false};
 
     // ── Threading & Playback ──────────────────────────────────
     std::thread             m_sortThread;
@@ -88,10 +99,10 @@ private:
     std::atomic<bool>       m_threadFinished{false};
 
     std::vector<SortStep>   m_history;
-    int32_t                 m_historyIndex{-1};
-    static constexpr int32_t MAX_HISTORY{10'000};
+    std::int32_t            m_historyIndex{-1};
+    static constexpr std::int32_t MAX_HISTORY{10'000};
 
-    std::vector<int32_t>    m_finalStepForIndex;
+    std::vector<std::int32_t> m_finalStepForIndex;
 
     LiveMetrics m_metrics;
     AlgoInfo    m_algoInfo;
@@ -99,11 +110,11 @@ private:
     std::chrono::steady_clock::time_point m_lastStepTime;
 
     // ── Scrolling Status ──────────────────────────────────────
-    int32_t m_explanationScrollY{0};
-    float   m_explanationScrollX{0.0f};
-    int32_t m_numbersScrollY{0};
-    float   m_numbersScrollX{0.0f};
-    bool    m_autoScrollNumbers{true};
+    std::int32_t m_explanationScrollY{0};
+    float        m_explanationScrollX{0.0f};
+    std::int32_t m_numbersScrollY{0};
+    float        m_numbersScrollX{0.0f};
+    bool         m_autoScrollNumbers{true};
 
     // ── Buttons ───────────────────────────────────────────────
     Button m_btnMenuStart, m_btnMenuSettings, m_btnMenuQuit;
@@ -114,8 +125,9 @@ private:
     Button m_randomButton, m_sizeUpButton, m_sizeDownButton;
     Button m_viewBarsButton, m_viewNumsButton;
     Button m_btnBackToMenu, m_btnBenchmark;
-    Button m_speedDownButton, m_speedUpButton; // NEU: Speed Buttons
+    Button m_speedDownButton, m_speedUpButton;
 
+    // ── Private Methoden ──────────────────────────────────────
     void initSDL();
     void initButtons();
     void fillRandom();
@@ -123,15 +135,15 @@ private:
     void startStepping();
     void joinThread();
     void sortThreadFunc();
-    void onSortStep(const std::vector<int32_t>& arr, int32_t a, int32_t b, std::string_view action);
-    void playBeep(int32_t value, int32_t maxValue, int32_t durationMs);
+    void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action);
+    void playBeep(std::int32_t value, std::int32_t maxValue, std::int32_t durationMs);
 
     void pauseSort();
     void resumeSort();
     void cancelSort();
     void stepForward();
     void stepBackward();
-    void applyHistoryStep(int32_t index);
+    void applyHistoryStep(std::int32_t index);
 
     void handleEvents();
     void handleMainMenuClick(float mx, float my);

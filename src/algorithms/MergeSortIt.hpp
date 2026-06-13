@@ -2,9 +2,13 @@
 // MergeSortIt.hpp
 // ============================================================
 #pragma once
+
+#include <vector>
+#include <cstdint>
 #include "../SortAlgorithms.hpp"
 
 namespace Algorithms
 {
-    void mergeSortIt(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    // ── Modern C++20: Explizite Standard-Typen (std::int32_t) ──
+    void mergeSortIt(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
 }

@@ -1,44 +1,32 @@
 // ============================================================
 // Visualizer.cpp – Konstruktor, SDL-Init, Thread-Logik
-//
-// C++20 Features & Modernisierungen:
-// ┌──────────────────────┬─────────────────────────────────────┐
-// │ Anonymer Namespace   │ Ersetzt C-static für globale Konst. │
-// │ std::int32_t         │ Explizite Typen aus <cstdint>       │
-// │ std::size_t          │ Für alle Container-Größen           │
-// │ Umlaute (UTF-8)      │ Sauberes Deutsch in den Menüs       │
-// │ RAII                 │ Smart Pointer (bereits im Header)   │
-// └──────────────────────┴─────────────────────────────────────┘
 // ============================================================
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
 #include <format>
+#include <numbers>
 #include <random>
 #include <ranges>
 #include <stdexcept>
-#include <cmath>
-#include <numbers>
-#include <algorithm>
-#include <cstdlib>
-#include <cstdint> // Für explizite Integer-Typen
+#include <thread>
 
-// ── Anonymer Namespace ──────────────────────────────────────
-// Konstanten sauber für diese Translation-Unit kapseln.
 namespace {
     constexpr std::int32_t WIN_W     = 1400;
     constexpr std::int32_t WIN_H     = 860;
-    constexpr float        METRICS_W = 380.0f;
     constexpr float        UI_H      = 170.0f;
     constexpr float        VIS_X     = 10.0f;
     constexpr float        VIS_H     = WIN_H - UI_H - 20.0f;
 }
 
-// ============================================================
 Visualizer::Visualizer()
 {
     initSDL();
@@ -53,7 +41,6 @@ Visualizer::~Visualizer()
     if (m_audioStream) SDL_DestroyAudioStream(m_audioStream);
 }
 
-// ============================================================
 void Visualizer::initSDL()
 {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
@@ -83,7 +70,6 @@ void Visualizer::initSDL()
     if (m_audioStream) SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(m_audioStream));
 }
 
-// ============================================================
 void Visualizer::initButtons()
 {
     float centerX = WIN_W / 2.0f - 125.0f;
@@ -127,11 +113,9 @@ void Visualizer::initButtons()
     m_btnBenchmark    = {550.0f, row3Y, 160.0f, 35.0f, "Shell Benchmark", false};
 }
 
-// ============================================================
 void Visualizer::fillRandom()
 {
     joinThread();
-
     std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<std::int32_t> dist(1, 99);
 
@@ -158,18 +142,15 @@ void Visualizer::fillRandom()
     m_historyIndex = 0;
 }
 
-// ============================================================
 void Visualizer::joinThread()
 {
-    if (m_sortThread.joinable())
-    {
+    if (m_sortThread.joinable()) {
         m_stopRequested = true;
         m_sortThread.join();
     }
     m_sorting = m_stopRequested = m_threadFinished = false;
 }
 
-// ============================================================
 void Visualizer::sortThreadFunc()
 {
     auto cb = [this](const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
@@ -178,10 +159,8 @@ void Visualizer::sortThreadFunc()
         if (m_stopRequested.load()) throw std::runtime_error("__STOP__");
     };
 
-    try
-    {
-        switch (m_algorithm)
-        {
+    try {
+        switch (m_algorithm) {
             case Algorithm::QuickSort:    SortAlgorithms::quickSort   (m_array, cb, m_metrics); break;
             case Algorithm::MergeSortRec: SortAlgorithms::mergeSort   (m_array, cb, m_metrics); break;
             case Algorithm::MergeSortIt:  SortAlgorithms::mergeSortIt (m_array, cb, m_metrics); break;
@@ -192,11 +171,10 @@ void Visualizer::sortThreadFunc()
         }
 
         {
-            std::lock_guard lock(m_mutex); // Modern C++17 CTAD
+            std::lock_guard lock(m_mutex);
             if (!m_history.empty()) {
                 const auto& finalArray = m_history.back().array;
                 m_finalStepForIndex.assign(finalArray.size(), -1);
-
                 for (std::size_t i = 0; i < finalArray.size(); ++i) {
                     std::int32_t lastWrong = -1;
                     for (std::size_t s = 0; s < m_history.size(); ++s) {
@@ -208,24 +186,17 @@ void Visualizer::sortThreadFunc()
                 }
             }
         }
-
     }
-    catch (const std::runtime_error& e)
-    { if (std::string_view{e.what()} != "__STOP__") throw; }
+    catch (const std::runtime_error& e) { if (std::string_view{e.what()} != "__STOP__") throw; }
     catch (...) {}
-
     m_threadFinished = true;
 }
 
-// ============================================================
 void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::int32_t durationMs)
 {
     if (!m_audioStream || maxValue == 0 || durationMs <= 0 || m_volume <= 0.01f) return;
 
-    const float minFreq = 150.0f;
-    const float maxFreq = 1500.0f;
-    const float freq = minFreq + (static_cast<float>(value) / static_cast<float>(maxValue)) * (maxFreq - minFreq);
-
+    const float freq = 150.0f + (static_cast<float>(value) / static_cast<float>(maxValue)) * 1350.0f;
     const std::int32_t sampleRate = 44100;
     const std::int32_t numSamples = std::max(1, (sampleRate * durationMs) / 1000);
 
@@ -233,119 +204,82 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::int32_
     float phase = 0.0f;
     const float phaseIncrement = (2.0f * std::numbers::pi_v<float> * freq) / static_cast<float>(sampleRate);
 
-    for (std::int32_t i = 0; i < numSamples; ++i)
-    {
+    for (std::int32_t i = 0; i < numSamples; ++i) {
         float sample = std::sin(phase) * m_volume;
-        if (i > numSamples - 50 && numSamples > 50) {
-            sample *= static_cast<float>(numSamples - i) / 50.0f;
-        }
+        if (i > numSamples - 50 && numSamples > 50) sample *= static_cast<float>(numSamples - i) / 50.0f;
         samples[i] = sample;
         phase += phaseIncrement;
     }
-
     SDL_PutAudioStreamData(m_audioStream, samples.data(), samples.size() * sizeof(float));
 }
 
-// ============================================================
 void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
 {
     std::lock_guard lock(m_mutex);
-    if (m_history.size() < MAX_HISTORY) {
-        m_history.push_back({arr, a, b, std::string(action)});
-    }
+    if (m_history.size() < MAX_HISTORY) m_history.push_back({arr, a, b, std::string(action)});
 }
 
-// ============================================================
 void Visualizer::startLive()
 {
     if (m_sorting) return;
     joinThread();
-
-    m_liveMode = true;
-    m_sorting = true;
+    m_liveMode = m_sorting = true;
     m_stopRequested = false;
-    m_metrics  = {};
-
+    m_metrics = {};
     const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1, "Anfangszustand"} : m_history.front();
     m_history.clear();
     m_history.push_back(anfang);
     m_array = anfang.array;
     m_historyIndex = 0;
     m_finalStepForIndex.clear();
-
-    m_sortStart = std::chrono::steady_clock::now();
-    m_lastStepTime = m_sortStart;
-
+    m_sortStart = m_lastStepTime = std::chrono::steady_clock::now();
     m_sortThread = std::thread(&Visualizer::sortThreadFunc, this);
 }
 
-// ============================================================
 void Visualizer::startStepping()
 {
     if (m_sorting) return;
     joinThread();
-
     m_liveMode = false;
     m_sorting = true;
     m_stopRequested = false;
-    m_metrics  = {};
-
+    m_metrics = {};
     const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1, "Anfangszustand"} : m_history.front();
     m_history.clear();
     m_history.push_back(anfang);
     m_array = anfang.array;
     m_historyIndex = 0;
     m_finalStepForIndex.clear();
-
-    m_sortStart  = std::chrono::steady_clock::now();
-
+    m_sortStart = std::chrono::steady_clock::now();
     m_sortThread = std::thread(&Visualizer::sortThreadFunc, this);
 }
 
-void Visualizer::pauseSort() {
-    m_liveMode = false;
-}
-
-void Visualizer::resumeSort() {
-    m_liveMode = true;
-    m_lastStepTime = std::chrono::steady_clock::now();
-}
+void Visualizer::pauseSort() { m_liveMode = false; }
+void Visualizer::resumeSort() { m_liveMode = true; m_lastStepTime = std::chrono::steady_clock::now(); }
 
 void Visualizer::cancelSort() {
     joinThread();
-    m_liveMode = false;
-    m_sorting = false;
-
+    m_liveMode = m_sorting = false;
     if (!m_history.empty()) {
-        SortStep initial = m_history.front();
-        m_history.clear();
-        m_history.push_back(initial);
-        m_array = initial.array;
+        m_array = m_history.front().array;
+        m_history.assign(1, m_history.front());
     }
-
-    m_historyIndex = 0;
-    m_highlightA = -1;
-    m_highlightB = -1;
+    m_historyIndex = m_highlightA = m_highlightB = -1;
     m_actionText = "Abgebrochen - Anfangszustand";
     m_finalStepForIndex.clear();
     m_metrics = {};
     m_autoScrollNumbers = true;
 }
 
-// ============================================================
 void Visualizer::run()
 {
-    while (m_running)
-    {
+    while (m_running) {
         handleEvents();
-
         auto now = std::chrono::steady_clock::now();
-
         if (m_sorting && m_liveMode) {
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStepTime).count();
             if (elapsed >= m_delayMs) {
                 m_lastStepTime = now;
-
                 std::lock_guard lock(m_mutex);
                 if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
                     m_historyIndex++;
@@ -354,23 +288,16 @@ void Visualizer::run()
                     m_highlightA = step.indexA;
                     m_highlightB = step.indexB;
                     m_actionText = step.action;
-
                     std::int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
-                    std::int32_t valForPitch = maxVal / 2;
-                    if (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) valForPitch = m_array[step.indexA];
-                    else if (step.indexB >= 0 && step.indexB < static_cast<std::int32_t>(m_array.size())) valForPitch = m_array[step.indexB];
-
-                    playBeep(valForPitch, maxVal, std::max<std::uint32_t>(1, m_delayMs));
+                    std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[step.indexA] : maxVal/2;
+                    playBeep(v, maxVal, std::max<std::uint32_t>(1, m_delayMs));
                 } else if (m_threadFinished) {
-                    m_sorting = false;
-                    m_liveMode = false;
+                    m_sorting = m_liveMode = false;
                     m_actionText = "Sortierung erfolgreich!";
-                    m_highlightA = -1;
-                    m_highlightB = -1;
+                    m_highlightA = m_highlightB = -1;
                 }
             }
         }
-
         draw();
         SDL_Delay(16);
     }
