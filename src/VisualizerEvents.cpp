@@ -1,13 +1,26 @@
 // ============================================================
 // VisualizerEvents.cpp – Event-Handling & Interaktion
+//
+// C++20 Features & Modernisierungen:
+// ┌──────────────────────┬─────────────────────────────────────┐
+// │ Anonymer Namespace   │ Ersetzt C-static für Datei-Konst.   │
+// │ std::int32_t         │ Explizite Typen aus <cstdint>       │
+// │ std::size_t          │ Für Schleifen über Container        │
+// │ std::uint8_t         │ Für enum-Casts (Algorithm)          │
+// └──────────────────────┴─────────────────────────────────────┘
 // ============================================================
 #include "Visualizer.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>
-#include <cstdlib> // Fuer std::system
+#include <cstdlib>
 #include <format>
+#include <cstdint> // Für explizite Integer-Typen
 
-static constexpr float MET_X = 1400.0f - 380.0f; // WIN_W - METRICS_W
+// ── Anonymer Namespace ──────────────────────────────────────
+// Konstanten sauber für diese Translation-Unit kapseln.
+namespace {
+    constexpr float MET_X = 1400.0f - 380.0f; // WIN_W - METRICS_W
+}
 
 bool Visualizer::isInside(float mx, float my, const Button& btn) const {
     return mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h;
@@ -54,7 +67,7 @@ void Visualizer::handleEvents() {
                 if (e.wheel.x != 0) m_numbersScrollX -= e.wheel.x * 40.0f;
                 if (e.wheel.y != 0) {
                     if (shift) m_numbersScrollX -= e.wheel.y * 40.0f;
-                    else       m_numbersScrollY -= static_cast<int32_t>(e.wheel.y) * 3;
+                    else       m_numbersScrollY -= static_cast<std::int32_t>(e.wheel.y) * 3;
                 }
             }
             else {
@@ -62,7 +75,7 @@ void Visualizer::handleEvents() {
                 if (e.wheel.x != 0) m_explanationScrollX -= e.wheel.x * 40.0f;
                 if (e.wheel.y != 0) {
                     if (shift) m_explanationScrollX -= e.wheel.y * 40.0f;
-                    else       m_explanationScrollY -= static_cast<int32_t>(e.wheel.y) * 3;
+                    else       m_explanationScrollY -= static_cast<std::int32_t>(e.wheel.y) * 3;
                 }
             }
         }
@@ -98,12 +111,12 @@ void Visualizer::handleButtonClick(float mx, float my) {
     }
 
     if (!m_sorting) {
-        for (size_t i = 0; i < m_algoButtons.size(); ++i) {
+        for (std::size_t i = 0; i < m_algoButtons.size(); ++i) {
             if (isInside(mx, my, m_algoButtons[i])) {
                 for (auto& b : m_algoButtons) b.active = false;
                 m_algoButtons[i].active = true;
                 m_algorithm = static_cast<Algorithm>(i);
-                m_algoInfo = SortAlgorithms::getInfo(static_cast<uint8_t>(m_algorithm));
+                m_algoInfo = SortAlgorithms::getInfo(static_cast<std::uint8_t>(m_algorithm));
                 fillRandom();
                 return;
             }
@@ -126,6 +139,20 @@ void Visualizer::handleButtonClick(float mx, float my) {
         if (m_sorting || m_historyIndex > 0) {
             cancelSort();
         }
+    }
+    // ── SPEED BUTTONS KLICK-LOGIK (DYNAMISCH) ──
+    else if (isInside(mx, my, m_speedDownButton)) {
+        if (m_delayMs >= 100)      m_delayMs += 50;
+        else if (m_delayMs >= 20)  m_delayMs += 10;
+        else if (m_delayMs >= 5)   m_delayMs += 5;
+        else                       m_delayMs += 1;
+        if (m_delayMs > 1000)      m_delayMs = 1000; // Obergrenze: 1 Sekunde pro Schritt
+    }
+    else if (isInside(mx, my, m_speedUpButton)) {
+        if (m_delayMs > 100)       m_delayMs -= 50;
+        else if (m_delayMs > 20)   m_delayMs -= 10;
+        else if (m_delayMs > 5)    m_delayMs -= 5;
+        else if (m_delayMs > 1)    m_delayMs -= 1; // Untergrenze: 1 ms (rasend schnell)
     }
     else if (isInside(mx, my, m_stepBackButton)) {
         m_autoScrollNumbers = true;
@@ -155,9 +182,7 @@ void Visualizer::handleButtonClick(float mx, float my) {
         m_viewMode = ViewMode::Numbers;
         m_autoScrollNumbers = true;
     }
-    // ── NEU: BENCHMARK BUTTON ──
     else if (isInside(mx, my, m_btnBenchmark)) {
-        // String für CLI Argument bestimmen
         std::string algoStr;
         switch (m_algorithm) {
             case Algorithm::QuickSort:    algoStr = "quicksort"; break;
@@ -169,7 +194,6 @@ void Visualizer::handleButtonClick(float mx, float my) {
             case Algorithm::BubbleSort:   algoStr = "bubblesort"; break;
         }
 
-        // Systemkommando bauen: "start cmd /k" oeffnet eine neue Shell in Windows und fuehrt den CLI-Befehl aus
         std::string cmd = std::format("start cmd /k \".\\SortVisualizer.exe --cli --algo {} --size 1000000\"", algoStr);
         std::system(cmd.c_str());
     }
@@ -177,7 +201,7 @@ void Visualizer::handleButtonClick(float mx, float my) {
 
 void Visualizer::stepForward() {
     std::lock_guard lock(m_mutex);
-    if (m_historyIndex < static_cast<int32_t>(m_history.size()) - 1) {
+    if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
         m_historyIndex++;
         const auto& step = m_history[m_historyIndex];
         m_array = step.array;
@@ -202,8 +226,4 @@ void Visualizer::stepBackward() {
         m_highlightB = step.indexB;
         m_actionText = step.action;
     }
-}
-
-void Visualizer::applyHistoryStep(int32_t index) {
-    // Ungenutzt
 }

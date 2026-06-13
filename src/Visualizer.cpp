@@ -1,5 +1,14 @@
 // ============================================================
 // Visualizer.cpp – Konstruktor, SDL-Init, Thread-Logik
+//
+// C++20 Features & Modernisierungen:
+// ┌──────────────────────┬─────────────────────────────────────┐
+// │ Anonymer Namespace   │ Ersetzt C-static für globale Konst. │
+// │ std::int32_t         │ Explizite Typen aus <cstdint>       │
+// │ std::size_t          │ Für alle Container-Größen           │
+// │ Umlaute (UTF-8)      │ Sauberes Deutsch in den Menüs       │
+// │ RAII                 │ Smart Pointer (bereits im Header)   │
+// └──────────────────────┴─────────────────────────────────────┘
 // ============================================================
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
@@ -15,21 +24,26 @@
 #include <cmath>
 #include <numbers>
 #include <algorithm>
-#include <cstdlib> // Fuer std::system
+#include <cstdlib>
+#include <cstdint> // Für explizite Integer-Typen
 
-static constexpr int32_t WIN_W     = 1400;
-static constexpr int32_t WIN_H     = 860;
-static constexpr float   METRICS_W = 380.0f;
-static constexpr float   UI_H      = 170.0f;
-static constexpr float   VIS_X     = 10.0f;
-static constexpr float   VIS_H     = WIN_H - UI_H - 20.0f;
+// ── Anonymer Namespace ──────────────────────────────────────
+// Konstanten sauber für diese Translation-Unit kapseln.
+namespace {
+    constexpr std::int32_t WIN_W     = 1400;
+    constexpr std::int32_t WIN_H     = 860;
+    constexpr float        METRICS_W = 380.0f;
+    constexpr float        UI_H      = 170.0f;
+    constexpr float        VIS_X     = 10.0f;
+    constexpr float        VIS_H     = WIN_H - UI_H - 20.0f;
+}
 
 // ============================================================
 Visualizer::Visualizer()
 {
     initSDL();
     initButtons();
-    m_algoInfo = SortAlgorithms::getInfo(static_cast<uint8_t>(m_algorithm));
+    m_algoInfo = SortAlgorithms::getInfo(static_cast<std::uint8_t>(m_algorithm));
     fillRandom();
 }
 
@@ -79,7 +93,7 @@ void Visualizer::initButtons()
 
     m_btnSettingsFullscreen = {centerX, 300.0f, 250.0f, 50.0f, "Vollbild: AUS", false};
     m_volumeSliderBg        = {centerX, 450.0f, 250.0f, 20.0f};
-    m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurueck zum Menue", false};
+    m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurück zum Menü", false};
 
     const float row1Y = WIN_H - UI_H + 10.0f;
     const float row2Y = WIN_H - UI_H + 65.0f;
@@ -90,26 +104,27 @@ void Visualizer::initButtons()
        "HeapSort",  "RadixSort",       "CountingSort", "BubbleSort" }};
 
     float bx = VIS_X;
-    for (uint8_t i = 0; i < labels.size(); ++i) {
+    for (std::uint8_t i = 0; i < labels.size(); ++i) {
         m_algoButtons.push_back({bx, row1Y, 170.0f, 45.0f, std::string(labels[i]), (i == 0)});
         bx += 175.0f;
     }
 
-    m_startButton    = {10.0f,  row2Y, 100.0f, 40.0f, "Start",  false};
-    m_stopButton     = {120.0f, row2Y, 100.0f, 40.0f, "Stop",   false};
-    m_cancelButton   = {230.0f, row2Y, 110.0f, 40.0f, "Abbruch",false};
-    m_stepBackButton = {350.0f, row2Y,  70.0f, 40.0f, "  < ",   false};
-    m_stepFwdButton  = {430.0f, row2Y,  70.0f, 40.0f, "  > ",   false};
-    m_randomButton   = {510.0f, row2Y, 110.0f, 40.0f, "Random", false};
+    m_startButton     = {10.0f,  row2Y, 100.0f, 40.0f, "Start",  false};
+    m_stopButton      = {120.0f, row2Y, 100.0f, 40.0f, "Stop",   false};
+    m_cancelButton    = {230.0f, row2Y, 110.0f, 40.0f, "Abbruch",false};
+    m_stepBackButton  = {350.0f, row2Y,  70.0f, 40.0f, "  < ",   false};
+    m_stepFwdButton   = {430.0f, row2Y,  70.0f, 40.0f, "  > ",   false};
+    m_randomButton    = {510.0f, row2Y, 110.0f, 40.0f, "Random", false};
 
-    m_sizeDownButton = {10.0f,  row3Y,  40.0f, 35.0f, "-",      false};
-    m_sizeUpButton   = {100.0f, row3Y,  40.0f, 35.0f, "+",      false};
-    m_viewBarsButton = {160.0f, row3Y, 110.0f, 35.0f, "Balken", true };
-    m_viewNumsButton = {280.0f, row3Y, 110.0f, 35.0f, "Zahlen", false};
-    m_btnBackToMenu  = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenue", false};
+    m_speedDownButton = {630.0f, row2Y,  50.0f, 40.0f, "Spd-",  false};
+    m_speedUpButton   = {690.0f, row2Y,  50.0f, 40.0f, "Spd+",  false};
 
-    // NEU: Der Shell Benchmark Button
-    m_btnBenchmark   = {550.0f, row3Y, 160.0f, 35.0f, "Shell Benchmark", false};
+    m_sizeDownButton  = {10.0f,  row3Y,  40.0f, 35.0f, "-",      false};
+    m_sizeUpButton    = {100.0f, row3Y,  40.0f, 35.0f, "+",      false};
+    m_viewBarsButton  = {160.0f, row3Y, 110.0f, 35.0f, "Balken", true };
+    m_viewNumsButton  = {280.0f, row3Y, 110.0f, 35.0f, "Zahlen", false};
+    m_btnBackToMenu   = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenü", false};
+    m_btnBenchmark    = {550.0f, row3Y, 160.0f, 35.0f, "Shell Benchmark", false};
 }
 
 // ============================================================
@@ -118,7 +133,7 @@ void Visualizer::fillRandom()
     joinThread();
 
     std::mt19937 rng{std::random_device{}()};
-    std::uniform_int_distribution<int32_t> dist(1, 99);
+    std::uniform_int_distribution<std::int32_t> dist(1, 99);
 
     m_array.resize(m_arraySize);
     std::ranges::generate(m_array, [&]{ return dist(rng); });
@@ -157,7 +172,7 @@ void Visualizer::joinThread()
 // ============================================================
 void Visualizer::sortThreadFunc()
 {
-    auto cb = [this](const std::vector<int32_t>& arr, int32_t a, int32_t b, std::string_view action)
+    auto cb = [this](const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
     {
         onSortStep(arr, a, b, action);
         if (m_stopRequested.load()) throw std::runtime_error("__STOP__");
@@ -177,16 +192,16 @@ void Visualizer::sortThreadFunc()
         }
 
         {
-            std::lock_guard lock(m_mutex);
+            std::lock_guard lock(m_mutex); // Modern C++17 CTAD
             if (!m_history.empty()) {
                 const auto& finalArray = m_history.back().array;
                 m_finalStepForIndex.assign(finalArray.size(), -1);
 
-                for (size_t i = 0; i < finalArray.size(); ++i) {
-                    int lastWrong = -1;
-                    for (size_t s = 0; s < m_history.size(); ++s) {
+                for (std::size_t i = 0; i < finalArray.size(); ++i) {
+                    std::int32_t lastWrong = -1;
+                    for (std::size_t s = 0; s < m_history.size(); ++s) {
                         if (i < m_history[s].array.size() && m_history[s].array[i] != finalArray[i]) {
-                            lastWrong = static_cast<int>(s);
+                            lastWrong = static_cast<std::int32_t>(s);
                         }
                     }
                     m_finalStepForIndex[i] = lastWrong;
@@ -203,7 +218,7 @@ void Visualizer::sortThreadFunc()
 }
 
 // ============================================================
-void Visualizer::playBeep(int32_t value, int32_t maxValue, int32_t durationMs)
+void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::int32_t durationMs)
 {
     if (!m_audioStream || maxValue == 0 || durationMs <= 0 || m_volume <= 0.01f) return;
 
@@ -211,14 +226,14 @@ void Visualizer::playBeep(int32_t value, int32_t maxValue, int32_t durationMs)
     const float maxFreq = 1500.0f;
     const float freq = minFreq + (static_cast<float>(value) / static_cast<float>(maxValue)) * (maxFreq - minFreq);
 
-    const int sampleRate = 44100;
-    const int numSamples = std::max(1, (sampleRate * durationMs) / 1000);
+    const std::int32_t sampleRate = 44100;
+    const std::int32_t numSamples = std::max(1, (sampleRate * durationMs) / 1000);
 
     std::vector<float> samples(numSamples);
     float phase = 0.0f;
     const float phaseIncrement = (2.0f * std::numbers::pi_v<float> * freq) / static_cast<float>(sampleRate);
 
-    for (int i = 0; i < numSamples; ++i)
+    for (std::int32_t i = 0; i < numSamples; ++i)
     {
         float sample = std::sin(phase) * m_volume;
         if (i > numSamples - 50 && numSamples > 50) {
@@ -232,7 +247,7 @@ void Visualizer::playBeep(int32_t value, int32_t maxValue, int32_t durationMs)
 }
 
 // ============================================================
-void Visualizer::onSortStep(const std::vector<int32_t>& arr, int32_t a, int32_t b, std::string_view action)
+void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
 {
     std::lock_guard lock(m_mutex);
     if (m_history.size() < MAX_HISTORY) {
@@ -332,7 +347,7 @@ void Visualizer::run()
                 m_lastStepTime = now;
 
                 std::lock_guard lock(m_mutex);
-                if (m_historyIndex < static_cast<int32_t>(m_history.size()) - 1) {
+                if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
                     m_historyIndex++;
                     const auto& step = m_history[m_historyIndex];
                     m_array = step.array;
@@ -340,12 +355,12 @@ void Visualizer::run()
                     m_highlightB = step.indexB;
                     m_actionText = step.action;
 
-                    int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
-                    int32_t valForPitch = maxVal / 2;
-                    if (step.indexA >= 0 && step.indexA < m_array.size()) valForPitch = m_array[step.indexA];
-                    else if (step.indexB >= 0 && step.indexB < m_array.size()) valForPitch = m_array[step.indexB];
+                    std::int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
+                    std::int32_t valForPitch = maxVal / 2;
+                    if (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) valForPitch = m_array[step.indexA];
+                    else if (step.indexB >= 0 && step.indexB < static_cast<std::int32_t>(m_array.size())) valForPitch = m_array[step.indexB];
 
-                    playBeep(valForPitch, maxVal, std::max(1u, m_delayMs));
+                    playBeep(valForPitch, maxVal, std::max<std::uint32_t>(1, m_delayMs));
                 } else if (m_threadFinished) {
                     m_sorting = false;
                     m_liveMode = false;

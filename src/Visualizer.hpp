@@ -113,7 +113,8 @@ private:
     Button m_startButton, m_stopButton, m_cancelButton, m_stepBackButton, m_stepFwdButton;
     Button m_randomButton, m_sizeUpButton, m_sizeDownButton;
     Button m_viewBarsButton, m_viewNumsButton;
-    Button m_btnBackToMenu, m_btnBenchmark; // NEU: Benchmark Button
+    Button m_btnBackToMenu, m_btnBenchmark;
+    Button m_speedDownButton, m_speedUpButton; // NEU: Speed Buttons
 
     void initSDL();
     void initButtons();
