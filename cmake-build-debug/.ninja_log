@@ -1,5 +1,5 @@
 # ninja log v6
-42	1144	8029100847313987	build.ninja	e60a8971e49f2143
+42	1144	8030855497022989	build.ninja	e60a8971e49f2143
 603	5894	8012532628922552	CMakeFiles/SortVisualizer.dir/src/Visualizer.cpp.obj	8fb4400298077c8
 13	5726	8012532623020913	CMakeFiles/SortVisualizer.dir/src/main.cpp.obj	5289901d6e612755
 215	3570	8006715325933765	CMakeFiles/SortVisualizer.dir/src/algorithms/RadixSort.cpp.obj	95ff9fe007012061

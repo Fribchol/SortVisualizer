@@ -155,7 +155,7 @@ build CMakeFiles\SortVisualizer.dir\src\algorithms\BubbleSort.cpp.obj: CXX_COMPI
 
 build SortVisualizer.exe: CXX_EXECUTABLE_LINKER__SortVisualizer_Release CMakeFiles\SortVisualizer.dir\src\main.cpp.obj CMakeFiles\SortVisualizer.dir\src\SortAlgorithms.cpp.obj CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj CMakeFiles\SortVisualizer.dir\src\VisualizerDraw.cpp.obj CMakeFiles\SortVisualizer.dir\src\VisualizerEvents.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\Quicksort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\MergeSortRec.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\MergeSortIt.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\HeapSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\RadixSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\CountingSort.cpp.obj CMakeFiles\SortVisualizer.dir\src\algorithms\BubbleSort.cpp.obj | C$:\vcpkg\installed\x64-windows\lib\SDL3_ttf.lib C$:\vcpkg\installed\x64-windows\lib\SDL3.lib
   FLAGS = /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -MD
-  LINK_FLAGS = /machine:x64 /INCREMENTAL:NO /subsystem:windows
+  LINK_FLAGS = /machine:x64 /INCREMENTAL:NO /subsystem:console
   LINK_LIBRARIES = C:\vcpkg\installed\x64-windows\lib\SDL3_ttf.lib  C:\vcpkg\installed\x64-windows\lib\SDL3.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
   OBJECT_DIR = CMakeFiles\SortVisualizer.dir
   POST_BUILD = cd .

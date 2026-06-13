@@ -42,10 +42,3 @@ configure_file(
         ${CMAKE_BINARY_DIR}/DejaVuSans.ttf
         COPYONLY
 )
-
-# Sorgt dafür, dass unter Windows im Release-Modus keine störende Konsole im Hintergrund aufgeht
-if(WIN32)
-    set_target_properties(SortVisualizer PROPERTIES
-            WIN32_EXECUTABLE $<CONFIG:Release>
-    )
-endif()

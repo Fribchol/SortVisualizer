@@ -15,6 +15,7 @@
 #include <cmath>
 #include <numbers>
 #include <algorithm>
+#include <cstdlib> // Fuer std::system
 
 static constexpr int32_t WIN_W     = 1400;
 static constexpr int32_t WIN_H     = 860;
@@ -78,7 +79,7 @@ void Visualizer::initButtons()
 
     m_btnSettingsFullscreen = {centerX, 300.0f, 250.0f, 50.0f, "Vollbild: AUS", false};
     m_volumeSliderBg        = {centerX, 450.0f, 250.0f, 20.0f};
-    m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurück zum Menü", false};
+    m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurueck zum Menue", false};
 
     const float row1Y = WIN_H - UI_H + 10.0f;
     const float row2Y = WIN_H - UI_H + 65.0f;
@@ -94,10 +95,9 @@ void Visualizer::initButtons()
         bx += 175.0f;
     }
 
-    // Buttons neu ausrichten, um Platz für Abbruch zu machen
     m_startButton    = {10.0f,  row2Y, 100.0f, 40.0f, "Start",  false};
-    m_stopButton     = {120.0f, row2Y, 100.0f, 40.0f, "Stop",   false}; // Das wird der Pause/Weiter Button
-    m_cancelButton   = {230.0f, row2Y, 110.0f, 40.0f, "Abbruch",false}; // NEU
+    m_stopButton     = {120.0f, row2Y, 100.0f, 40.0f, "Stop",   false};
+    m_cancelButton   = {230.0f, row2Y, 110.0f, 40.0f, "Abbruch",false};
     m_stepBackButton = {350.0f, row2Y,  70.0f, 40.0f, "  < ",   false};
     m_stepFwdButton  = {430.0f, row2Y,  70.0f, 40.0f, "  > ",   false};
     m_randomButton   = {510.0f, row2Y, 110.0f, 40.0f, "Random", false};
@@ -106,7 +106,10 @@ void Visualizer::initButtons()
     m_sizeUpButton   = {100.0f, row3Y,  40.0f, 35.0f, "+",      false};
     m_viewBarsButton = {160.0f, row3Y, 110.0f, 35.0f, "Balken", true };
     m_viewNumsButton = {280.0f, row3Y, 110.0f, 35.0f, "Zahlen", false};
-    m_btnBackToMenu  = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenü", false};
+    m_btnBackToMenu  = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenue", false};
+
+    // NEU: Der Shell Benchmark Button
+    m_btnBenchmark   = {550.0f, row3Y, 160.0f, 35.0f, "Shell Benchmark", false};
 }
 
 // ============================================================
@@ -293,7 +296,6 @@ void Visualizer::resumeSort() {
     m_lastStepTime = std::chrono::steady_clock::now();
 }
 
-// NEU: Hält alles an und spult zurück zum initialen Zustand
 void Visualizer::cancelSort() {
     joinThread();
     m_liveMode = false;

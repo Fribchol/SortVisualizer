@@ -4,6 +4,8 @@
 #include "Visualizer.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>
+#include <cstdlib> // Fuer std::system
+#include <format>
 
 static constexpr float MET_X = 1400.0f - 380.0f; // WIN_W - METRICS_W
 
@@ -120,7 +122,6 @@ void Visualizer::handleButtonClick(float mx, float my) {
             else { m_autoScrollNumbers = true; resumeSort(); }
         }
     }
-    // ── NEU: ABBRUCH BUTTON GEKLICKT ──
     else if (isInside(mx, my, m_cancelButton)) {
         if (m_sorting || m_historyIndex > 0) {
             cancelSort();
@@ -153,6 +154,24 @@ void Visualizer::handleButtonClick(float mx, float my) {
         m_viewNumsButton.active = true;
         m_viewMode = ViewMode::Numbers;
         m_autoScrollNumbers = true;
+    }
+    // ── NEU: BENCHMARK BUTTON ──
+    else if (isInside(mx, my, m_btnBenchmark)) {
+        // String für CLI Argument bestimmen
+        std::string algoStr;
+        switch (m_algorithm) {
+            case Algorithm::QuickSort:    algoStr = "quicksort"; break;
+            case Algorithm::MergeSortRec: algoStr = "mergesort"; break;
+            case Algorithm::MergeSortIt:  algoStr = "mergesort_it"; break;
+            case Algorithm::HeapSort:     algoStr = "heapsort"; break;
+            case Algorithm::RadixSort:    algoStr = "radixsort"; break;
+            case Algorithm::CountingSort: algoStr = "countingsort"; break;
+            case Algorithm::BubbleSort:   algoStr = "bubblesort"; break;
+        }
+
+        // Systemkommando bauen: "start cmd /k" oeffnet eine neue Shell in Windows und fuehrt den CLI-Befehl aus
+        std::string cmd = std::format("start cmd /k \".\\SortVisualizer.exe --cli --algo {} --size 1000000\"", algoStr);
+        std::system(cmd.c_str());
     }
 }
 

@@ -113,7 +113,7 @@ private:
     Button m_startButton, m_stopButton, m_cancelButton, m_stepBackButton, m_stepFwdButton;
     Button m_randomButton, m_sizeUpButton, m_sizeDownButton;
     Button m_viewBarsButton, m_viewNumsButton;
-    Button m_btnBackToMenu;
+    Button m_btnBackToMenu, m_btnBenchmark; // NEU: Benchmark Button
 
     void initSDL();
     void initButtons();
@@ -127,7 +127,7 @@ private:
 
     void pauseSort();
     void resumeSort();
-    void cancelSort(); // NEU: Abbruch
+    void cancelSort();
     void stepForward();
     void stepBackward();
     void applyHistoryStep(int32_t index);

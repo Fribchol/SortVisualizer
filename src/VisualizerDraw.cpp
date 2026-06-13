@@ -104,7 +104,7 @@ void Visualizer::drawSettings()
     drawBtn(m_btnSettingsFullscreen);
     drawBtn(m_btnSettingsBack);
 
-    drawText(std::format("Lautstärke: {}%", static_cast<int>(m_volume * 100)), m_volumeSliderBg.x, m_volumeSliderBg.y - 30.0f, {200, 200, 200, 255}, m_fontLarge.get());
+    drawText(std::format("Lautstaerke: {}%", static_cast<int>(m_volume * 100)), m_volumeSliderBg.x, m_volumeSliderBg.y - 30.0f, {200, 200, 200, 255}, m_fontLarge.get());
 
     SDL_SetRenderDrawColor(m_renderer.get(), 30, 30, 45, 255);
     SDL_RenderFillRect(m_renderer.get(), &m_volumeSliderBg);
@@ -149,7 +149,7 @@ void Visualizer::drawBarsView()
     for (int32_t i = 0; i < static_cast<int32_t>(m_array.size()); ++i)
     {
         const float barH = (static_cast<float>(m_array[i]) / static_cast<float>(maxVal)) * effectiveVisHeight;
-        const float bx   = VIS_X + i * barW ;
+        const float bx   = VIS_X + i * barW;
         const float by   = VIS_Y + VIS_H - barH;
 
         bool shouldBeGreen = isFinished;
@@ -164,14 +164,21 @@ void Visualizer::drawBarsView()
         } else if (i == m_highlightB && !isFinished) {
             SDL_SetRenderDrawColor(m_renderer.get(), 255, 220, 50, 255);
         } else if (shouldBeGreen) {
-            SDL_SetRenderDrawColor(m_renderer.get(), 40, 200, 80, 255);
+            // ANPASSUNG: Abwechselnde Gruentoene, damit benachbarte Balken nicht verschmelzen
+            if (i % 2 == 0) SDL_SetRenderDrawColor(m_renderer.get(), 40, 190, 75, 255);
+            else            SDL_SetRenderDrawColor(m_renderer.get(), 50, 210, 85, 255);
         } else {
-            SDL_SetRenderDrawColor(m_renderer.get(), 55, 55, 75, 255);
+            // ANPASSUNG: Abwechselnde Blautoene statt grauer Blobs!
+            if (i % 2 == 0) SDL_SetRenderDrawColor(m_renderer.get(), 45, 90, 170, 255);  // Dunkleres Blau
+            else            SDL_SetRenderDrawColor(m_renderer.get(), 60, 110, 200, 255); // Helleres Blau
         }
 
-        SDL_FRect barRect{bx + 1.0f, by, barW - 2.0f, barH};
+        // ANPASSUNG: Padding komplett entfernt (+1.0f und -2.0f geloescht).
+        // Jeder Balken nimmt nahtlos die exakt berechnete Breite ein.
+        SDL_FRect barRect{bx, by, barW, barH};
         SDL_RenderFillRect(m_renderer.get(), &barRect);
 
+        // Die Zahlen ueber den Balken zeichnen, wenn genug Platz ist
         if (barW > 28.0f) {
             SDL_Color textColor;
             if (shouldBeGreen) textColor = {200, 255, 200, 255};
@@ -200,7 +207,6 @@ void Visualizer::drawNumbersView()
         std::lock_guard lock(m_mutex);
         if (m_history.empty()) return;
         fullHistSize = static_cast<int32_t>(m_history.size());
-        // WICHTIG: Die GUI darf nur bis zum aktuellen Playback-Schritt in die Zukunft sehen!
         visibleHistSize = std::clamp(m_historyIndex + 1, 1, fullHistSize);
         currentArraySize = m_array.size();
         sortedTarget = m_history.front().array;
@@ -214,7 +220,7 @@ void Visualizer::drawNumbersView()
 
     if (m_autoScrollNumbers) {
         if (m_liveMode && m_sorting) {
-            m_numbersScrollY = maxScrollY; // Scrollt mit dem Player mit
+            m_numbersScrollY = maxScrollY;
         } else if (m_historyIndex >= 0) {
             m_numbersScrollY = std::clamp(m_historyIndex - maxLines / 2, 0, maxScrollY);
         }
@@ -246,7 +252,6 @@ void Visualizer::drawNumbersView()
         }
     }
 
-    // Schleife geht nur bis max. visibleHistSize
     for (int32_t s = startIdx; s < std::min(visibleHistSize, startIdx + maxLines); ++s)
     {
         SortStep step;
@@ -274,7 +279,7 @@ void Visualizer::drawNumbersView()
         const float   fy = VIS_Y + (s - startIdx) * lineH;
         const int32_t n  = static_cast<int32_t>(array.size());
 
-        const bool isCur = (s == m_historyIndex); // Jetzt ist isCur exakt da, wo der Player steht!
+        const bool isCur = (s == m_historyIndex);
         const bool lineIsFinished = (m_threadFinished && fullHistSize > 1 && s == fullHistSize - 1);
 
         if (isCur) {
@@ -378,7 +383,7 @@ void Visualizer::drawExplanationPanel()
     constexpr SDL_Color colCurrent {255, 220,  60, 255};
     constexpr SDL_Color colOld     {140, 160, 180, 255};
 
-    drawText("Schritt-Erklärung:", panelX, panelY, colTitle, m_fontSmall.get());
+    drawText("Schritt-Erklaerung:", panelX, panelY, colTitle, m_fontSmall.get());
 
     int32_t visibleHistSize = 0;
     int32_t fullHistSize = 0;
@@ -386,7 +391,6 @@ void Visualizer::drawExplanationPanel()
         std::lock_guard lock(m_mutex);
         if (m_history.empty()) return;
         fullHistSize = static_cast<int32_t>(m_history.size());
-        // Auch hier die Kristallkugel verdecken:
         visibleHistSize = std::clamp(m_historyIndex + 1, 1, fullHistSize);
     }
 
@@ -556,6 +560,8 @@ void Visualizer::drawButtons()
     drawBtn(m_viewBarsButton);
     drawBtn(m_viewNumsButton);
     drawBtn(m_btnBackToMenu,  !m_sorting);
+
+    drawBtn(m_btnBenchmark, true);
 
     drawText(std::format("n={}", m_arraySize),
              55.0f, WIN_H - UI_H + 122.0f,

@@ -1,234 +1,142 @@
 // ============================================================
 // MergeSortRec.cpp – Top-Down MergeSort, rekursiv
 //
-// Algorithmus-Erklärung:
-// MergeSort folgt dem "Teile und Herrsche" Prinzip:
-//
-//   TEILE:    Array in zwei Hälften aufteilen
-//   HERRSCHE: Jede Hälfte rekursiv sortieren
-//   FÜGE:     Beide sortierten Hälften zusammenführen
-//
-// Visualisierung (n=8):
-//   [8|3|5|1|4|7|2|6]
-//   [8|3|5|1] [4|7|2|6]       ← Teilen
-//   [8|3] [5|1] [4|7] [2|6]   ← Teilen
-//   [3|8] [1|5] [4|7] [2|6]   ← Merge (Paare)
-//   [1|3|5|8] [2|4|6|7]       ← Merge (Vierer)
-//   [1|2|3|4|5|6|7|8]         ← Merge (fertig!)
-//
-// Vorteil:  O(n log n) garantiert, stabil
-// Nachteil: O(n) extra Speicher für Kopien (L und R)
-//
-// Overflow-sichere Mitte:
-//   Falsch:  mid = (left + right) / 2  → kann überlaufen!
-//   Richtig: mid = left + (right - left) / 2
-//
-// C++20 Features:
+// C++20 Features & Optimierungen (Zero-Cost Abstraction):
 // ┌──────────────────────┬─────────────────────────────────────┐
+// │ if constexpr         │ Compile-Time Branching (Zero-Cost)  │
+// │ Einmalige Allocation │ Ein einziger Buffer für den ganzen  │
+// │                      │ Rekursionsbaum -> Max Performance!  │
+// │ std::copy            │ Hardware-beschleunigtes Kopieren    │
 // │ std::format          │ Typsicheres String-Formatting       │
-// │ string_view          │ Kein Kopieren bei Callbacks         │
-// │ Range-Konstruktor    │ vector direkt aus Iterator-Range    │
-// │ const int32_t        │ Unveränderliche lokale Variablen    │
-// │ static_cast<int32_t> │ Explizite, sichere Typkonvertierung │
-// │ static (intern)      │ Funktion nur in dieser Datei        │
 // └──────────────────────┴─────────────────────────────────────┘
 // ============================================================
 #include "MergeSortRec.hpp"
-#include <format>  // std::format (C++20)
+#include <algorithm>
+#include <format>
 
 namespace Algorithms
 {
     // ============================================================
-    // step – Hilfsfunktion: Schritt melden
-    //
-    // ── static (interne Linkage) ──────────────────────────────
-    // Nur in dieser .cpp Datei sichtbar.
-    // Kein Namenskonflikt mit step() in anderen Algorithmen.
-    //
-    // ── StepCallback& statt StepCallback ──────────────────────
-    // Referenz: std::function kopieren ist teuer (Heap-Alloc).
-    // Referenz = kein Kopieren, O(1) statt O(n).
-    //
-    // ── std::string_view ──────────────────────────────────────
-    // Kein Kopieren des Strings – nur ein "Blick" darauf.
-    // Perfekt für read-only Strings die nur weitergegeben werden.
+    // mergeImpl – Zwei sortierte Hälften zusammenführen (Template)
     // ============================================================
-    static void step(const std::vector<int32_t>& arr,
-                     StepCallback&               cb,
-                     int32_t                     a,
-                     int32_t                     b,
-                     std::string_view            action)
+    template <bool EnableVisuals>
+    static void mergeImpl(std::vector<int32_t>& arr,
+                          std::vector<int32_t>& buffer, // Wiederverwendbarer Puffer!
+                          int32_t               left,
+                          int32_t               mid,
+                          int32_t               right,
+                          const StepCallback&   cb,
+                          LiveMetrics&          m)
     {
-        if (cb) cb(arr, a, b, action);
-    }
+        // ── Data-Oriented: Kopieren per memmove ──
+        // Wir kopieren den relevanten Bereich aus arr in unseren Puffer.
+        // Das ist millionenfach schneller als jedes Mal neue std::vectors zu erstellen.
+        std::copy(arr.begin() + left, arr.begin() + right + 1, buffer.begin() + left);
+        m.arrayAccesses += (right - left + 1) * 2; // Read (arr) + Write (buffer)
 
-    // ============================================================
-    // merge – Zwei sortierte Hälften zusammenführen
-    //
-    // ── Range-Konstruktor ─────────────────────────────────────
-    // std::vector<int32_t> L(arr.begin() + left, arr.begin() + mid + 1);
-    // Baut einen neuen Vektor direkt aus einem Iterator-Bereich.
-    // Moderner und sicherer als manuelles Element-für-Element Kopieren.
-    //
-    // ── Warum Kopien (L und R) nötig sind ────────────────────
-    // Wir schreiben in arr[] während wir aus arr[] lesen.
-    // Ohne Kopien: überschriebene Werte werden fälschlicherweise
-    // nochmal gelesen → falsches Ergebnis!
-    // L und R sind temporäre, sichere Kopien der zwei Hälften.
-    //
-    // ── L[i] <= R[j] für Stabilität ──────────────────────────
-    // <= statt <: Bei gleichen Elementen kommt das linke zuerst.
-    // Das garantiert STABILITÄT: gleiche Werte behalten ihre
-    // ursprüngliche relative Reihenfolge im Array.
-    // ============================================================
-    static void merge(std::vector<int32_t>& arr,
-                      int32_t               left,
-                      int32_t               mid,
-                      int32_t               right,
-                      StepCallback&         cb,
-                      LiveMetrics&          m)
-    {
-        // ── Range-Konstruktor ─────────────────────────────────
-        // Linke Hälfte:  Elemente von [left  .. mid]
-        // Rechte Hälfte: Elemente von [mid+1 .. right]
-        std::vector<int32_t> L(arr.begin() + left,
-                                arr.begin() + mid + 1);
-        std::vector<int32_t> R(arr.begin() + mid + 1,
-                                arr.begin() + right + 1);
+        int32_t i = left;      // Lese-Index linke Hälfte (im Buffer)
+        int32_t j = mid + 1;   // Lese-Index rechte Hälfte (im Buffer)
+        int32_t k = left;      // Schreib-Index in original arr
 
-        int32_t i = 0;    // Index in L (linke Hälfte)
-        int32_t j = 0;    // Index in R (rechte Hälfte)
-        int32_t k = left; // Schreibindex in arr
-
-        // ── Hauptschleife: kleineres Element vorne einsetzen ──
-        // Vergleicht jeweils die vordersten Elemente von L und R.
-        // Das kleinere kommt zuerst ins Array.
-        while (i < static_cast<int32_t>(L.size()) &&
-               j < static_cast<int32_t>(R.size()))
+        // ── Hauptschleife: Das kleinere Element zurück in arr schreiben ──
+        while (i <= mid && j <= right)
         {
             ++m.comparisons;
 
-            if (L[i] <= R[j])
+            if (buffer[i] <= buffer[j])
             {
-                // ── Linkes Element kleiner/gleich → stabil! ───
-                // Bei Gleichheit linkes zuerst → Stabilität!
-                arr[k] = L[i++];
+                // <= sorgt für Stabilität des Algorithmus
+                arr[k] = buffer[i++];
                 ++m.arrayAccesses;
-                step(arr, cb, k, -1,
-                     std::format(
-                         "Zusammenführen: {} ist kleiner oder gleich, "
-                         "wird an Position {} gesetzt",
-                         arr[k], k));
+
+                if constexpr (EnableVisuals) {
+                    cb(arr, k, -1, std::format(
+                        "Zusammenfuehren (rekursiv): {} ist kleiner oder gleich -> Position {}",
+                        arr[k], k));
+                }
             }
             else
             {
-                // ── Rechtes Element kleiner → nach vorne ──────
-                arr[k] = R[j++];
+                arr[k] = buffer[j++];
                 ++m.arrayAccesses;
-                step(arr, cb, k, -1,
-                     std::format(
-                         "Zusammenführen: {} ist kleiner, "
-                         "wird an Position {} gesetzt",
-                         arr[k], k));
+
+                if constexpr (EnableVisuals) {
+                    cb(arr, k, -1, std::format(
+                        "Zusammenfuehren (rekursiv): {} ist kleiner -> Position {}",
+                        arr[k], k));
+                }
             }
             ++k;
         }
 
-        // ── Rest der linken Hälfte einfügen ───────────────────
-        // Falls L noch Elemente hat: alle sind größer als R's letztes.
-        // Direkt einfügen, kein Vergleich mehr nötig.
-        while (i < static_cast<int32_t>(L.size()))
+        // ── Reste der linken Hälfte kopieren ──
+        while (i <= mid)
         {
-            arr[k] = L[i++];
+            arr[k] = buffer[i++];
             ++m.arrayAccesses;
-            step(arr, cb, k, -1,
-                 std::format(
-                     "Rest der linken Haelfte: "
-                     "{} wird an Position {} gesetzt",
-                     arr[k], k));
+
+            if constexpr (EnableVisuals) {
+                cb(arr, k, -1, std::format("Rest links: {} wird an Position {} gesetzt", arr[k], k));
+            }
             ++k;
         }
 
-        // ── Rest der rechten Hälfte einfügen ──────────────────
-        // Falls R noch Elemente hat: analog zur linken Hälfte.
-        while (j < static_cast<int32_t>(R.size()))
+        // ── Reste der rechten Hälfte kopieren ──
+        while (j <= right)
         {
-            arr[k] = R[j++];
+            arr[k] = buffer[j++];
             ++m.arrayAccesses;
-            step(arr, cb, k, -1,
-                 std::format(
-                     "Rest der rechten Haelfte: "
-                     "{} wird an Position {} gesetzt",
-                     arr[k], k));
+
+            if constexpr (EnableVisuals) {
+                cb(arr, k, -1, std::format("Rest rechts: {} wird an Position {} gesetzt", arr[k], k));
+            }
             ++k;
         }
     }
 
     // ============================================================
-    // mergeSortRecHelper – Rekursiver Kern
-    //
-    // ── Basisfall: left >= right ──────────────────────────────
-    // Ein Array mit 0 oder 1 Elementen ist bereits sortiert.
-    // Die Rekursion stoppt wenn left == right (ein Element).
-    //
-    // ── Overflow-sichere Mittenberechnung ────────────────────
-    // Falsch:  (left + right) / 2
-    //          → kann überlaufen wenn left + right > INT_MAX!
-    // Richtig: left + (right - left) / 2
-    //          → right - left ist immer <= INT_MAX
-    //
-    // ── Rekursionsreihenfolge ─────────────────────────────────
-    // 1. Linke Hälfte sortieren  (rekursiv)
-    // 2. Rechte Hälfte sortieren (rekursiv)
-    // 3. Beide Hälften mergen
-    // Reihenfolge ist wichtig: merge() setzt sortierte Hälften voraus!
+    // mergeSortRecHelper – Rekursiver Kern als Template
     // ============================================================
+    template <bool EnableVisuals>
     static void mergeSortRecHelper(std::vector<int32_t>& arr,
-                                    int32_t               left,
-                                    int32_t               right,
-                                    StepCallback&         cb,
-                                    LiveMetrics&          m)
+                                   std::vector<int32_t>& buffer,
+                                   int32_t               left,
+                                   int32_t               right,
+                                   const StepCallback&   cb,
+                                   LiveMetrics&          m)
     {
-        // ── Basisfall ─────────────────────────────────────────
-        // left == right: nur noch ein Element → bereits sortiert
-        // left >  right: leeres Teilarray → nichts zu tun
+        // Basisfall: Teilarray ist leer oder hat nur 1 Element
         if (left >= right) return;
 
-        // ── Overflow-sichere Mitte ────────────────────────────
+        // Overflow-sichere Mittenberechnung
         const int32_t mid = left + (right - left) / 2;
 
-        // ── Divide: Teilen ────────────────────────────────────
-        mergeSortRecHelper(arr, left,    mid,   cb, m); // links
-        mergeSortRecHelper(arr, mid + 1, right, cb, m); // rechts
+        // Teile (Divide)
+        mergeSortRecHelper<EnableVisuals>(arr, buffer, left, mid, cb, m);
+        mergeSortRecHelper<EnableVisuals>(arr, buffer, mid + 1, right, cb, m);
 
-        // ── Conquer: Zusammenführen ───────────────────────────
-        // Jetzt sind [left..mid] und [mid+1..right] sortiert.
-        // merge() fügt sie zu einem sortierten Bereich zusammen.
-        merge(arr, left, mid, right, cb, m);
+        // Herrsche & Fuge zusammen (Conquer & Merge)
+        mergeImpl<EnableVisuals>(arr, buffer, left, mid, right, cb, m);
     }
 
     // ============================================================
     // mergeSortRec – Öffentliche Schnittstelle
-    //
-    // ── Leerheitscheck vor Rekursion ─────────────────────────
-    // Verhindert undefined behavior bei leerem Array
-    // (size() - 1 wäre bei size()==0 ein Unterlauf: 0-1 = UINT_MAX)
+    // Der Dispatcher: Hier gabeln sich die Wege für GUI und CLI.
     // ============================================================
-    void mergeSortRec(std::vector<int32_t>& arr,
-                      StepCallback          cb,
-                      LiveMetrics&          m)
+    void mergeSortRec(std::vector<int32_t>& arr, StepCallback cb, LiveMetrics& m)
     {
         if (arr.empty()) return;
 
-        // ── static_cast<int32_t> ──────────────────────────────
-        // size() gibt size_t (unsigned) zurück.
-        // -1 bei unsigned würde zu sehr großer Zahl werden!
-        // static_cast: sichere, explizite Konvertierung zu signed.
-        mergeSortRecHelper(arr,
-                           0,
-                           static_cast<int32_t>(arr.size()) - 1,
-                           cb,
-                           m);
+        // Einziger Buffer für die GESAMTE Sortierung (verhindert Memory-Leaks/Fragmentierung)
+        std::vector<int32_t> buffer(arr.size());
+
+        if (cb) {
+            // GUI-Modus
+            mergeSortRecHelper<true>(arr, buffer, 0, static_cast<int32_t>(arr.size()) - 1, cb, m);
+        } else {
+            // CLI-Modus: Max Speed!
+            mergeSortRecHelper<false>(arr, buffer, 0, static_cast<int32_t>(arr.size()) - 1, cb, m);
+        }
     }
 
 } // namespace Algorithms
