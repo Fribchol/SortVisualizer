@@ -1,6 +1,5 @@
 // ============================================================
-// SortAlgorithms.cpp
-// Dispatcher + AlgoInfo Tabelle
+// SortAlgorithms.cpp – Dispatcher + AlgoInfo Tabelle
 // ============================================================
 #include "SortAlgorithms.hpp"
 #include "algorithms/QuickSort.hpp"
@@ -21,8 +20,6 @@ namespace SortAlgorithms
 {
     namespace
     {
-        // ÄNDERUNG: const statt constexpr, da std::string keinen
-        // konstanten Ausdruck zur Kompilierzeit bilden kann.
         const std::array<AlgoInfo, 7> infoTable
         {{
             {"QuickSort", "O(n log n)", "O(n log n)", "O(n^2)", "O(log n)", "Nein", "Sehr gut - schnellster Algo in der Praxis", "Sehr gut - Cache-freundlich (in-place)"},
@@ -39,31 +36,29 @@ namespace SortAlgorithms
     {
         if (idx >= infoTable.size())
             throw std::out_of_range(std::format("Unbekannter Algorithmus-Index: {}", idx));
-
-        // .at() ist sicher und wirft std::out_of_range bei falschem Index
         return infoTable.at(idx);
     }
 
-    // Die Dispatcher-Funktionen – delegieren direkt weiter
-    void quickSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::quickSort(arr, std::move(cb), m); }
+    // Die Dispatcher-Funktionen – delegieren an den Namespace Algorithms
+    void quickSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::quickSort(arr, cb, m); }
 
-    void mergeSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::mergeSortRec(arr, std::move(cb), m); }
+    void mergeSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::mergeSortRec(arr, cb, m); }
 
-    void mergeSortIt(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::mergeSortIt(arr, std::move(cb), m); }
+    void mergeSortIt(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::mergeSortIt(arr, cb, m); }
 
-    void heapSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::heapSort(arr, std::move(cb), m); }
+    void heapSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::heapSort(arr, cb, m); }
 
-    void radixSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::radixSort(arr, std::move(cb), m); }
+    void radixSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::radixSort(arr, cb, m); }
 
-    void countingSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::countingSort(arr, std::move(cb), m); }
+    void countingSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::countingSort(arr, cb, m); }
 
-    void bubbleSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
-    { Algorithms::bubbleSort(arr, std::move(cb), m); }
+    void bubbleSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    { Algorithms::bubbleSort(arr, cb, m); }
 
 } // namespace SortAlgorithms

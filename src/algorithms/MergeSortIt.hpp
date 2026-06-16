@@ -9,6 +9,6 @@
 
 namespace Algorithms
 {
-    // ── Modern C++20: Explizite Standard-Typen (std::int32_t) ──
-    void mergeSortIt(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m);
+    // Signatur auf const StepCallback& angepasst
+    void mergeSortIt(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m);
 }

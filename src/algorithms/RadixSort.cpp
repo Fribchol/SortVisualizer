@@ -1,24 +1,5 @@
 // ============================================================
 // RadixSort.cpp – LSD RadixSort, Basis 10
-//
-// C++20 Features & Modernisierungen:
-// ┌──────────────────────┬─────────────────────────────────────┐
-// │ Anonymer Namespace   │ Verhindert Linker-Konflikte sauber  │
-// │ if constexpr         │ Compile-Time Branching (Zero-Cost)  │
-// │ std::int32_t         │ Explizite Typen aus <cstdint>       │
-// │ Einmalige Allocation │ 'output' wird nur 1x auf dem Heap   │
-// │                      │ angelegt.                           │
-// │ std::array (Stack)   │ 'count' liegt auf dem Stack (O(1))  │
-// │ std::ranges::fill    │ Schnelles Resetten des Arrays       │
-// │ std::ranges::max     │ Direkter Container-Zugriff          │
-// │ std::format          │ Typsicheres String-Formatting       │
-// └──────────────────────┴─────────────────────────────────────┘
-//
-// Data-Oriented Design (DOD):
-// Statt bei jedem Durchlauf neue Arrays zu allozieren, wird
-// 'output' nur einmal auf dem Heap erzeugt. Das kleine Zähl-Array
-// 'count' liegt komplett auf dem Stack und wird extrem schnell
-// über std::ranges::fill zurückgesetzt.
 // ============================================================
 #include "RadixSort.hpp"
 #include <algorithm>
@@ -26,13 +7,10 @@
 #include <ranges>
 #include <array>
 #include <string>
-#include <cstdint> // C++ Standard für feste Integer-Breiten
+#include <cstdint>
 
 namespace Algorithms
 {
-    // ── Anonymer Namespace ──────────────────────────────────────
-    // Ersetzt 'static' für interne Funktionen. Alles hierin
-    // ist strikt nur in dieser Translation Unit (.cpp) sichtbar.
     namespace
     {
         // ============================================================
@@ -41,80 +19,65 @@ namespace Algorithms
         template <bool EnableVisuals>
         void radixSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {
-            const std::int32_t maxVal = std::ranges::max(arr);
-            const std::int32_t n      = static_cast<std::int32_t>(arr.size());
+            const auto maxVal = std::ranges::max(arr);
+            const auto n      = static_cast<std::int32_t>(arr.size());
 
-            // ── DOD: Puffer nur EINMAL anlegen ──
-            // 'output' liegt auf dem Heap (Größe n).
-            // 'count' liegt auf dem ultra-schnellen Stack (feste Größe 10).
-            std::vector<std::int32_t> output(n);
+            std::vector<std::int32_t> output(static_cast<std::size_t>(n));
             std::array<std::int32_t, 10> count{};
 
-            // exp = 1, 10, 100, 1000...
-            for (std::int32_t exp = 1; maxVal / exp > 0; exp *= 10)
+            for (auto exp = 1; maxVal / exp > 0; exp *= 10)
             {
-                // Reset des Zähler-Arrays auf dem Stack (rasend schnell)
                 std::ranges::fill(count, 0);
 
-                // Phase 1: Häufigkeiten der aktuellen Stelle zählen
-                for (std::int32_t i = 0; i < n; ++i)
+                for (auto i = 0; i < n; ++i)
                 {
-                    ++count[(arr[i] / exp) % 10];
+                    count[static_cast<std::size_t>((arr[static_cast<std::size_t>(i)] / exp) % 10)]++;
                     ++m.arrayAccesses;
                 }
 
-                // Phase 2: Kumulierte Summe berechnen
-                for (std::int32_t i = 1; i < 10; ++i)
+                for (auto i = 1; i < 10; ++i)
                 {
-                    count[i] += count[i - 1];
+                    count[static_cast<std::size_t>(i)] += count[static_cast<std::size_t>(i - 1)];
                 }
 
-                // Phase 3: Stabil von hinten in das output-Array einsortieren
-                for (std::int32_t i = n - 1; i >= 0; --i)
+                for (auto i = n - 1; i >= 0; --i)
                 {
-                    const std::int32_t digit = (arr[i] / exp) % 10;
-                    output[--count[digit]] = arr[i];
+                    auto digit = (arr[static_cast<std::size_t>(i)] / exp) % 10;
+                    output[static_cast<std::size_t>(--count[static_cast<std::size_t>(digit)])] = arr[static_cast<std::size_t>(i)];
                     ++m.arrayAccesses;
                 }
 
-                // Phase 4: Ergebnis aus dem Puffer zurück in arr schreiben
-                // Wir iterieren hier per Hand, um die GUI-Schritte und Metriken zu triggern.
-                for (std::int32_t i = 0; i < n; ++i)
+                for (auto i = 0; i < n; ++i)
                 {
-                    arr[i] = output[i];
-                    ++m.swaps;         // Wertung als Schreib-Operation
+                    arr[static_cast<std::size_t>(i)] = output[static_cast<std::size_t>(i)];
+                    ++m.swaps;
                     ++m.arrayAccesses;
 
-                    // Zero-Cost Abstraction: Im CLI existiert dieser Block nicht!
                     if constexpr (EnableVisuals) {
-                        const std::string stelle =
-                            (exp == 1)   ? "Einerstelle"
-                            : (exp == 10)  ? "Zehnerstelle"
-                            : (exp == 100) ? "Hunderterstelle"
-                            :                std::format("{}er-Stelle", exp);
+                        std::string stelle = (exp == 1)   ? "Einerstelle"
+                                           : (exp == 10)  ? "Zehnerstelle"
+                                           : (exp == 100) ? "Hunderterstelle"
+                                           :                std::format("{}er-Stelle", exp);
 
                         cb(arr, i, -1, std::format(
                             "Sortiere nach {}: {} hat Ziffer {} und kommt an Position {}",
-                            stelle, arr[i], (arr[i] / exp) % 10, i));
+                            stelle, arr[static_cast<std::size_t>(i)], (arr[static_cast<std::size_t>(i)] / exp) % 10, i));
                     }
                 }
             }
         }
-    } // Ende des anonymen Namespaces
+    }
 
     // ============================================================
     // radixSort – Öffentliche Schnittstelle
-    // Der Dispatcher: Hier gabeln sich die Wege für GUI und CLI.
     // ============================================================
-    void radixSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& m)
+    void radixSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
         if (arr.empty()) return;
 
         if (cb) {
-            // GUI-Modus: Mit allen Visualisierungen und Strings
             radixSortImpl<true>(arr, cb, m);
         } else {
-            // CLI-Modus: Pure native Array-Performance
             radixSortImpl<false>(arr, cb, m);
         }
     }

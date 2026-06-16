@@ -1,14 +1,5 @@
 // ============================================================
 // Visualizer.hpp – Hauptklasse
-//
-// C++20 Features & Modernisierungen:
-// ┌──────────────────────┬─────────────────────────────────────┐
-// │ std::int32_t         │ Explizite Typen aus <cstdint>       │
-// │ std::uint8_t         │ Standardisierte Enum-Basistypen     │
-// │ [[nodiscard]]        │ Für Getter- und Prüffunktionen      │
-// │ Rule of 5            │ Explizit gelöschte Move/Copy Semantik│
-// │ RAII                 │ Deleter für rohe SDL-Ressourcen     │
-// └──────────────────────┴─────────────────────────────────────┘
 // ============================================================
 #pragma once
 
@@ -54,7 +45,6 @@ public:
     ~Visualizer();
 
     // ── Rule of 5: Weder kopierbar noch verschiebbar ──────────
-    // std::mutex und std::atomic verbieten das Verschieben (Move).
     Visualizer(const Visualizer&)            = delete;
     Visualizer& operator=(const Visualizer&) = delete;
     Visualizer(Visualizer&&)                 = delete;
@@ -78,6 +68,11 @@ private:
     float       m_volume    {0.1f};
     bool        m_isDraggingVolume{false};
     SDL_FRect   m_volumeSliderBg{};
+
+    bool        m_isDraggingSpeed{false};
+    SDL_FRect   m_speedSliderBg{};
+    bool        m_isDraggingSize{false};
+    SDL_FRect   m_sizeSliderBg{};
 
     // ── Array & Zustand ───────────────────────────────────────
     std::vector<std::int32_t> m_array;
@@ -122,10 +117,9 @@ private:
 
     std::vector<Button> m_algoButtons;
     Button m_startButton, m_stopButton, m_cancelButton, m_stepBackButton, m_stepFwdButton;
-    Button m_randomButton, m_sizeUpButton, m_sizeDownButton;
+    Button m_randomButton;
     Button m_viewBarsButton, m_viewNumsButton;
     Button m_btnBackToMenu, m_btnBenchmark;
-    Button m_speedDownButton, m_speedUpButton;
 
     // ── Private Methoden ──────────────────────────────────────
     void initSDL();
@@ -136,7 +130,8 @@ private:
     void joinThread();
     void sortThreadFunc();
     void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action);
-    void playBeep(std::int32_t value, std::int32_t maxValue, std::int32_t durationMs);
+    // Korrigierte Signatur: uint32_t für durationMs
+    void playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs);
 
     void pauseSort();
     void resumeSort();

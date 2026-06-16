@@ -10,5 +10,6 @@
 namespace Algorithms
 {
     // ── Modern C++20: Explizite Standard-Typen (std::int32_t) ──
-    void bubbleSort(std::vector<std::int32_t>& arr, StepCallback cb, LiveMetrics& metrics);
+    // Angepasst: const StepCallback& cb zur Vermeidung unnötiger Kopien
+    void bubbleSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& metrics);
 }
