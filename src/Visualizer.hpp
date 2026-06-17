@@ -130,7 +130,6 @@ private:
     void joinThread();
     void sortThreadFunc();
     void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action);
-    // Korrigierte Signatur: uint32_t für durationMs
     void playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs);
 
     void pauseSort();

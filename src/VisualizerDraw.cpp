@@ -205,7 +205,7 @@ void Visualizer::drawNumbersView()
 {
     constexpr float lineH = 26.0f;
     constexpr float numW  = 40.0f;
-    const float startArrayX = VIS_X + 45.0f;
+    constexpr float startArrayX = VIS_X + 45.0f;
 
     std::int32_t visibleHistSize = 0;
     std::int32_t fullHistSize = 0;

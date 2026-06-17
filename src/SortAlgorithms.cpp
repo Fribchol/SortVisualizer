@@ -14,7 +14,7 @@
 #include <array>
 #include <stdexcept>
 #include <cstdint>
-#include <utility>
+
 
 namespace SortAlgorithms
 {

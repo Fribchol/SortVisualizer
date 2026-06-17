@@ -83,9 +83,9 @@ void Visualizer::initButtons()
     m_volumeSliderBg        = {centerX, 450.0f, 250.0f, 20.0f};
     m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurück zum Menü", false};
 
-    const float row1Y = WIN_H - UI_H + 10.0f;
-    const float row2Y = WIN_H - UI_H + 65.0f;
-    const float row3Y = WIN_H - UI_H + 115.0f;
+    constexpr float row1Y = WIN_H - UI_H + 10.0f;
+    constexpr float row2Y = WIN_H - UI_H + 65.0f;
+    constexpr float row3Y = WIN_H - UI_H + 115.0f;
 
     m_speedSliderBg = {630.0f, row2Y, 150.0f, 20.0f};
     m_sizeSliderBg  = {10.0f,  row3Y, 130.0f, 20.0f};
@@ -95,7 +95,6 @@ void Visualizer::initButtons()
        "HeapSort",  "RadixSort",       "CountingSort", "BubbleSort" }};
 
     float bx = VIS_X;
-    // Expliziter Cast auf size_t verhindert Warnung bei Vergleich mit labels.size()
     for (std::size_t i = 0; i < labels.size(); ++i) {
         m_algoButtons.push_back({bx, row1Y, 170.0f, 45.0f, std::string(labels[i]), (i == 0)});
         bx += 175.0f;
@@ -120,7 +119,7 @@ void Visualizer::fillRandom()
     std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<std::int32_t> dist(1, 99);
 
-    m_array.resize(m_arraySize);
+    m_array.resize(static_cast<std::size_t>(m_arraySize));
     std::ranges::generate(m_array, [&]{ return dist(rng); });
 
     m_history.clear();
@@ -198,8 +197,8 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32
     if (!m_audioStream || maxValue == 0 || durationMs == 0 || m_volume <= 0.01f) return;
 
     const float freq = 150.0f + (static_cast<float>(value) / static_cast<float>(maxValue)) * 1350.0f;
-    const std::int32_t sampleRate = 44100;
-    const std::int32_t numSamples = static_cast<std::int32_t>((static_cast<std::int64_t>(sampleRate) * durationMs) / 1000);
+    constexpr std::int32_t sampleRate = 44100;
+    auto numSamples = static_cast<std::int32_t>((static_cast<std::int64_t>(sampleRate) * durationMs) / 1000);
 
     std::vector<float> samples(static_cast<std::size_t>(numSamples));
     float phase = 0.0f;
@@ -217,7 +216,7 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32
 void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
 {
     std::lock_guard lock(m_mutex);
-    if (m_history.size() < MAX_HISTORY) m_history.push_back({arr, a, b, std::string(action)});
+    if (m_history.size() < static_cast<std::size_t>(MAX_HISTORY)) m_history.push_back({arr, a, b, std::string(action)});
 }
 
 void Visualizer::startLive()
@@ -284,13 +283,13 @@ void Visualizer::run()
                 std::lock_guard lock(m_mutex);
                 if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
                     m_historyIndex++;
-                    const auto& step = m_history[m_historyIndex];
+                    const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
                     m_array = step.array;
                     m_highlightA = step.indexA;
                     m_highlightB = step.indexB;
                     m_actionText = step.action;
                     std::int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
-                    std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[step.indexA] : maxVal/2;
+                    std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[static_cast<std::size_t>(step.indexA)] : maxVal/2;
                     playBeep(v, maxVal, m_delayMs);
                 } else if (m_threadFinished) {
                     m_sorting = m_liveMode = false;

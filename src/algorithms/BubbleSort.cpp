@@ -30,7 +30,7 @@ namespace Algorithms
             for (auto i = 0; i < n - 1; ++i) {
                 bool swapped = false;
 
-                // Innere Schleife: Hier verbringt die CPU 99% der Zeit.
+                // Innere Schleife: Hier verbringt die CPU 99 % der Zeit.
                 for (auto j = 0; j < n - i - 1; ++j) {
                     ++m.comparisons;
                     m.arrayAccesses += 2;
