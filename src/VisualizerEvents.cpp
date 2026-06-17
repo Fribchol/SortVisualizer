@@ -16,7 +16,7 @@ namespace {
     constexpr std::string_view LABEL_FULLSCREEN_OFF = "Vollbild: AUS";
 }
 
-bool Visualizer::isInside(float mx, float my, const Button& btn) const {
+bool Visualizer::isInside(float mx, float my, const Button& btn) {
     return mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h;
 }
 
@@ -61,7 +61,7 @@ void Visualizer::handleEvents() {
         else if (e.type == SDL_EVENT_MOUSE_WHEEL && m_appState == AppState::Visualizer) {
             float mx, my; SDL_GetMouseState(&mx, &my);
             float lx, ly; SDL_RenderCoordinatesFromWindow(m_renderer.get(), mx, my, &lx, &ly);
-            const bool shift = (SDL_GetModState() & SDL_KMOD_SHIFT) != 0;
+
             if (lx < MET_X) {
                 m_autoScrollNumbers = false;
                 if (e.wheel.y != 0) m_numbersScrollY -= static_cast<std::int32_t>(e.wheel.y) * 3;
@@ -143,10 +143,10 @@ void Visualizer::stepForward() {
     std::lock_guard lock(m_mutex);
     if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
         m_historyIndex++;
-        const auto& step = m_history[m_historyIndex];
-        m_array = step.array; m_highlightA = step.indexA; m_highlightB = step.indexB; m_actionText = step.action;
+        const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
+        m_array = step.array; m_highlightA = step.indexA; m_highlightB = step.indexB;
     } else if (m_threadFinished && m_sorting) {
-        m_sorting = false; m_actionText = "Sortierung erfolgreich!"; m_highlightA = -1; m_highlightB = -1;
+        m_sorting = false; m_highlightA = -1; m_highlightB = -1;
     }
 }
 
@@ -154,7 +154,7 @@ void Visualizer::stepBackward() {
     std::lock_guard lock(m_mutex);
     if (m_historyIndex > 0) {
         m_historyIndex--;
-        const auto& step = m_history[m_historyIndex];
-        m_array = step.array; m_highlightA = step.indexA; m_highlightB = step.indexB; m_actionText = step.action;
+        const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
+        m_array = step.array; m_highlightA = step.indexA; m_highlightB = step.indexB;
     }
 }

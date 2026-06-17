@@ -3,10 +3,7 @@
 // ============================================================
 #include "RadixSort.hpp"
 #include <algorithm>
-#include <format>
-#include <ranges>
 #include <array>
-#include <string>
 #include <cstdint>
 
 namespace Algorithms
@@ -54,14 +51,7 @@ namespace Algorithms
                     ++m.arrayAccesses;
 
                     if constexpr (EnableVisuals) {
-                        std::string stelle = (exp == 1)   ? "Einerstelle"
-                                           : (exp == 10)  ? "Zehnerstelle"
-                                           : (exp == 100) ? "Hunderterstelle"
-                                           :                std::format("{}er-Stelle", exp);
-
-                        cb(arr, i, -1, std::format(
-                            "Sortiere nach {}: {} hat Ziffer {} und kommt an Position {}",
-                            stelle, arr[static_cast<std::size_t>(i)], (arr[static_cast<std::size_t>(i)] / exp) % 10, i));
+                        cb(arr, i, -1);
                     }
                 }
             }

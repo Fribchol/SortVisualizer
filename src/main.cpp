@@ -69,7 +69,8 @@ namespace {
         std::uniform_int_distribution<std::int32_t> dist(1, config.arraySize);
         std::ranges::generate(data, [&]{ return dist(rng); });
 
-        auto dummyCb = [](const std::vector<std::int32_t>&, std::int32_t, std::int32_t, std::string_view) {};
+        // Angepasst: Das Callback akzeptiert nur noch 3 Parameter (Array, indexA, indexB)
+        auto dummyCb = [](const std::vector<std::int32_t>&, std::int32_t, std::int32_t) {};
 
         LiveMetrics metrics;
         std::cout << "Starte Sortierung...\n\n";

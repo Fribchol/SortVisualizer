@@ -2,7 +2,6 @@
 // CountingSort.cpp – O(n+k), stabil
 // ============================================================
 #include "CountingSort.hpp"
-#include <format>
 #include <cstdint>
 
 namespace Algorithms
@@ -39,9 +38,7 @@ namespace Algorithms
                     ++m.arrayAccesses;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, static_cast<std::int32_t>(idx), -1, std::format(
-                            "Zahl {} eingesetzt (aus Count-Array, noch {} übrig) an Position {}",
-                            val, count[i], idx));
+                        cb(arr, static_cast<std::int32_t>(idx), -1);
                     }
                     ++idx;
                 }

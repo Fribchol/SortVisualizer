@@ -84,7 +84,6 @@ private:
     std::int32_t  m_highlightA{-1};
     std::int32_t  m_highlightB{-1};
     std::uint32_t m_delayMs   {10};
-    std::string   m_actionText;
     bool          m_liveMode  {false};
 
     // ── Threading & Playback ──────────────────────────────────
@@ -129,8 +128,9 @@ private:
     void startStepping();
     void joinThread();
     void sortThreadFunc();
-    void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action);
-    // Korrigierte Signatur: uint32_t für durationMs
+
+    // Angepasste Callback-Signatur (ohne Action-String)
+    void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b);
     void playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs);
 
     void pauseSort();
@@ -156,5 +156,6 @@ private:
     void drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font);
     void drawTextWrapped(std::string_view text, float x, float y, float maxWidth, SDL_Color color, TTF_Font* font, float& outHeight);
 
-    [[nodiscard]] bool isInside(float mx, float my, const Button& btn) const;
+    // Statische Hilfsfunktion für Button-Kollisionen
+    [[nodiscard]] static bool isInside(float mx, float my, const Button& btn);
 };

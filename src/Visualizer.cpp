@@ -83,9 +83,9 @@ void Visualizer::initButtons()
     m_volumeSliderBg        = {centerX, 450.0f, 250.0f, 20.0f};
     m_btnSettingsBack       = {centerX, 600.0f, 250.0f, 50.0f, "Zurück zum Menü", false};
 
-    const float row1Y = WIN_H - UI_H + 10.0f;
-    const float row2Y = WIN_H - UI_H + 65.0f;
-    const float row3Y = WIN_H - UI_H + 115.0f;
+    constexpr float row1Y = WIN_H - UI_H + 10.0f;
+    constexpr float row2Y = WIN_H - UI_H + 65.0f;
+    constexpr float row3Y = WIN_H - UI_H + 115.0f;
 
     m_speedSliderBg = {630.0f, row2Y, 150.0f, 20.0f};
     m_sizeSliderBg  = {10.0f,  row3Y, 130.0f, 20.0f};
@@ -95,7 +95,6 @@ void Visualizer::initButtons()
        "HeapSort",  "RadixSort",       "CountingSort", "BubbleSort" }};
 
     float bx = VIS_X;
-    // Expliziter Cast auf size_t verhindert Warnung bei Vergleich mit labels.size()
     for (std::size_t i = 0; i < labels.size(); ++i) {
         m_algoButtons.push_back({bx, row1Y, 170.0f, 45.0f, std::string(labels[i]), (i == 0)});
         bx += 175.0f;
@@ -120,14 +119,13 @@ void Visualizer::fillRandom()
     std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<std::int32_t> dist(1, 99);
 
-    m_array.resize(m_arraySize);
+    m_array.resize(static_cast<std::size_t>(m_arraySize));
     std::ranges::generate(m_array, [&]{ return dist(rng); });
 
     m_history.clear();
     m_metrics        = {};
     m_highlightA     = -1;
     m_highlightB     = -1;
-    m_actionText     = "Anfangszustand";
     m_stopRequested  = false;
     m_liveMode       = false;
     m_sorting        = false;
@@ -139,7 +137,7 @@ void Visualizer::fillRandom()
     m_autoScrollNumbers = true;
 
     m_finalStepForIndex.clear();
-    m_history.push_back({m_array, -1, -1, "Anfangszustand"});
+    m_history.push_back({m_array, -1, -1});
     m_historyIndex = 0;
 }
 
@@ -154,9 +152,9 @@ void Visualizer::joinThread()
 
 void Visualizer::sortThreadFunc()
 {
-    auto cb = [this](const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
+    auto cb = [this](const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b)
     {
-        onSortStep(arr, a, b, action);
+        onSortStep(arr, a, b);
         if (m_stopRequested.load()) throw std::runtime_error("__STOP__");
     };
 
@@ -172,7 +170,7 @@ void Visualizer::sortThreadFunc()
         }
 
         {
-            std::lock_guard lock(m_mutex);
+            std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_history.empty()) {
                 const auto& finalArray = m_history.back().array;
                 m_finalStepForIndex.assign(finalArray.size(), -1);
@@ -198,8 +196,8 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32
     if (!m_audioStream || maxValue == 0 || durationMs == 0 || m_volume <= 0.01f) return;
 
     const float freq = 150.0f + (static_cast<float>(value) / static_cast<float>(maxValue)) * 1350.0f;
-    const std::int32_t sampleRate = 44100;
-    const std::int32_t numSamples = static_cast<std::int32_t>((static_cast<std::int64_t>(sampleRate) * durationMs) / 1000);
+    constexpr std::int32_t sampleRate = 44100;
+    auto numSamples = static_cast<std::int32_t>((static_cast<std::int64_t>(sampleRate) * durationMs) / 1000);
 
     std::vector<float> samples(static_cast<std::size_t>(numSamples));
     float phase = 0.0f;
@@ -214,10 +212,10 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32
     SDL_PutAudioStreamData(m_audioStream, samples.data(), static_cast<std::int32_t>(samples.size() * sizeof(float)));
 }
 
-void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, std::string_view action)
+void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b)
 {
-    std::lock_guard lock(m_mutex);
-    if (m_history.size() < MAX_HISTORY) m_history.push_back({arr, a, b, std::string(action)});
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_history.size() < static_cast<std::size_t>(MAX_HISTORY)) m_history.push_back({arr, a, b});
 }
 
 void Visualizer::startLive()
@@ -227,7 +225,7 @@ void Visualizer::startLive()
     m_liveMode = m_sorting = true;
     m_stopRequested = false;
     m_metrics = {};
-    const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1, "Anfangszustand"} : m_history.front();
+    const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1} : m_history.front();
     m_history.clear();
     m_history.push_back(anfang);
     m_array = anfang.array;
@@ -245,7 +243,7 @@ void Visualizer::startStepping()
     m_sorting = true;
     m_stopRequested = false;
     m_metrics = {};
-    const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1, "Anfangszustand"} : m_history.front();
+    const SortStep anfang = m_history.empty() ? SortStep{m_array, -1, -1} : m_history.front();
     m_history.clear();
     m_history.push_back(anfang);
     m_array = anfang.array;
@@ -266,7 +264,6 @@ void Visualizer::cancelSort() {
         m_history.assign(1, m_history.front());
     }
     m_historyIndex = m_highlightA = m_highlightB = -1;
-    m_actionText = "Abgebrochen - Anfangszustand";
     m_finalStepForIndex.clear();
     m_metrics = {};
     m_autoScrollNumbers = true;
@@ -281,20 +278,18 @@ void Visualizer::run()
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStepTime).count();
             if (elapsed >= static_cast<std::int64_t>(m_delayMs)) {
                 m_lastStepTime = now;
-                std::lock_guard lock(m_mutex);
+                std::lock_guard<std::mutex> lock(m_mutex);
                 if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
                     m_historyIndex++;
-                    const auto& step = m_history[m_historyIndex];
+                    const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
                     m_array = step.array;
                     m_highlightA = step.indexA;
                     m_highlightB = step.indexB;
-                    m_actionText = step.action;
                     std::int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
-                    std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[step.indexA] : maxVal/2;
+                    std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[static_cast<std::size_t>(step.indexA)] : maxVal/2;
                     playBeep(v, maxVal, m_delayMs);
                 } else if (m_threadFinished) {
                     m_sorting = m_liveMode = false;
-                    m_actionText = "Sortierung erfolgreich!";
                     m_highlightA = m_highlightB = -1;
                 }
             }

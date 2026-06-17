@@ -13,14 +13,11 @@
 namespace {
     constexpr std::int32_t WIN_W     = 1400;
     constexpr std::int32_t WIN_H     = 860;
-    constexpr float        METRICS_W = 380.0f;
     constexpr float        UI_H      = 170.0f;
     constexpr float        VIS_X     = 10.0f;
     constexpr float        VIS_Y     = 10.0f;
-    constexpr float        VIS_W     = static_cast<float>(WIN_W) - METRICS_W - 20.0f;
+    constexpr float        VIS_W     = static_cast<float>(WIN_W) - 20.0f; // Volle Breite über den Bildschirm
     constexpr float        VIS_H     = static_cast<float>(WIN_H) - UI_H - 20.0f;
-    constexpr float        MET_X     = static_cast<float>(WIN_W) - METRICS_W;
-    constexpr float        MET_H     = static_cast<float>(WIN_H) - UI_H;
 
     struct SdlSurfaceDeleter { void operator()(SDL_Surface* s) const noexcept { SDL_DestroySurface(s); } };
     struct SdlTextureDeleter { void operator()(SDL_Texture* t) const noexcept { SDL_DestroyTexture(t); } };
@@ -136,7 +133,7 @@ void Visualizer::drawSettings()
 
 void Visualizer::drawBarsView()
 {
-    std::lock_guard lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_array.empty() || m_history.empty()) return;
 
     auto maxVal = static_cast<float>(*std::ranges::max_element(m_array));
@@ -205,7 +202,7 @@ void Visualizer::drawNumbersView()
 {
     constexpr float lineH = 26.0f;
     constexpr float numW  = 40.0f;
-    const float startArrayX = VIS_X + 45.0f;
+    constexpr float startArrayX = VIS_X + 45.0f;
 
     std::int32_t visibleHistSize = 0;
     std::int32_t fullHistSize = 0;
@@ -214,7 +211,7 @@ void Visualizer::drawNumbersView()
     std::vector<std::int32_t> sortedTarget;
 
     {
-        std::lock_guard lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_mutex);
         if (m_history.empty()) return;
         fullHistSize = static_cast<std::int32_t>(m_history.size());
         visibleHistSize = std::clamp(m_historyIndex + 1, 1, fullHistSize);
@@ -248,7 +245,7 @@ void Visualizer::drawNumbersView()
 
     std::vector<bool> touched(static_cast<std::size_t>(currentArraySize), false);
     for (auto s = 1; s <= startIdx && s < visibleHistSize; ++s) {
-        std::lock_guard lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_mutex);
         auto a = m_history[static_cast<std::size_t>(s)].indexA;
         auto b = m_history[static_cast<std::size_t>(s)].indexB;
         if (a >= 0 && a < static_cast<std::int32_t>(touched.size())) touched[static_cast<std::size_t>(a)] = true;
@@ -262,9 +259,9 @@ void Visualizer::drawNumbersView()
     for (auto s = startIdx; s < std::min(visibleHistSize, startIdx + maxLines); ++s)
     {
         SortStep step;
-        { std::lock_guard lock(m_mutex); step = m_history[static_cast<std::size_t>(s)]; }
+        { std::lock_guard<std::mutex> lock(m_mutex); step = m_history[static_cast<std::size_t>(s)]; }
 
-        const auto& [array, indexA, indexB, action] = step;
+        const auto& [array, indexA, indexB] = step;
         const float fy = VIS_Y + static_cast<float>(s - startIdx) * lineH;
         const auto  n  = static_cast<std::int32_t>(array.size());
         const bool  isCur = (s == m_historyIndex);
@@ -294,58 +291,6 @@ void Visualizer::drawNumbersView()
         }
     }
     SDL_SetRenderClipRect(m_renderer.get(), nullptr);
-}
-
-void Visualizer::drawExplanationPanel()
-{
-    constexpr float lineH    = 16.0f;
-    constexpr float panelX   = MET_X + 8.0f;
-    constexpr float panelY   = 48.0f;
-    constexpr float panelEnd = MET_H - 10.0f;
-
-    drawText("Schritt-Erklärung:", panelX, panelY, {100, 180, 255, 255}, m_fontSmall.get());
-
-    std::int32_t visibleHistSize = 0;
-    {
-        std::lock_guard lock(m_mutex);
-        if (m_history.empty()) return;
-        visibleHistSize = std::clamp(m_historyIndex + 1, 1, static_cast<std::int32_t>(m_history.size()));
-    }
-
-    constexpr auto maxLines = static_cast<std::int32_t>((panelEnd - panelY - 20.0f) / lineH);
-    auto maxScrollY = std::max(0, visibleHistSize - maxLines);
-    if (m_autoScrollNumbers) m_explanationScrollY = maxScrollY;
-    m_explanationScrollY = std::clamp(m_explanationScrollY, 0, maxScrollY);
-
-    SDL_Rect clipRect = { static_cast<std::int32_t>(MET_X), static_cast<std::int32_t>(panelY + 18.0f), static_cast<std::int32_t>(METRICS_W), static_cast<std::int32_t>(MET_H - panelY - 18.0f) };
-    SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
-
-    float cy = panelY + 20.0f;
-    for (auto s = m_explanationScrollY; s < std::min(visibleHistSize, m_explanationScrollY + maxLines) && cy < panelEnd; ++s)
-    {
-        SortStep step;
-        { std::lock_guard lock(m_mutex); step = m_history[static_cast<std::size_t>(s)]; }
-        if (s == m_historyIndex) {
-            SDL_SetRenderDrawColor(m_renderer.get(), 30, 50, 80, 255);
-            SDL_FRect stepRect{MET_X + 2.0f, cy - 1.0f, METRICS_W - 4.0f, lineH + 2.0f};
-            SDL_RenderFillRect(m_renderer.get(), &stepRect);
-        }
-        drawText(std::format("{}.", s + 1), panelX, cy, (s == m_historyIndex) ? SDL_Color{255, 200, 50, 255} : SDL_Color{100, 120, 140, 255}, m_fontTiny.get());
-        drawText(step.action, panelX + 32.0f, cy, (s == m_historyIndex) ? SDL_Color{255, 220, 60, 255} : SDL_Color{140, 160, 180, 255}, m_fontTiny.get());
-        cy += lineH;
-    }
-    SDL_SetRenderClipRect(m_renderer.get(), nullptr);
-}
-
-void Visualizer::drawMetricsPanel()
-{
-    SDL_SetRenderDrawColor(m_renderer.get(), 18, 18, 28, 255);
-    SDL_FRect bgRect{MET_X, 0.0f, METRICS_W, MET_H};
-    SDL_RenderFillRect(m_renderer.get(), &bgRect);
-    drawText(m_algoInfo.name, MET_X + 12.0f, 12.0f, {120, 200, 255, 255}, m_fontLarge.get());
-    SDL_SetRenderDrawColor(m_renderer.get(), 60, 60, 90, 255);
-    SDL_RenderLine(m_renderer.get(), static_cast<std::int32_t>(MET_X + 6), 36, WIN_W - 4, 36);
-    drawExplanationPanel();
 }
 
 void Visualizer::drawButtons()
@@ -409,14 +354,19 @@ void Visualizer::draw()
     SDL_SetRenderDrawColor(m_renderer.get(), 22, 22, 32, 255);
     SDL_RenderClear(m_renderer.get());
 
-    if (m_appState == AppState::MainMenu) drawMainMenu();
-    else if (m_appState == AppState::Settings) drawSettings();
-    else if (m_appState == AppState::Visualizer) {
+    if (m_appState == AppState::MainMenu) {
+        drawMainMenu();
+    } else if (m_appState == AppState::Settings) {
+        drawSettings();
+    } else if (m_appState == AppState::Visualizer) {
         SDL_SetRenderDrawColor(m_renderer.get(), 70, 70, 100, 255);
         SDL_RenderLine(m_renderer.get(), 0, WIN_H - static_cast<std::int32_t>(UI_H), WIN_W, WIN_H - static_cast<std::int32_t>(UI_H));
-        if (m_viewMode == ViewMode::Bars) drawBarsView();
-        else drawNumbersView();
-        drawMetricsPanel();
+
+        if (m_viewMode == ViewMode::Bars) {
+            drawBarsView();
+        } else {
+            drawNumbersView();
+        }
         drawButtons();
     }
     SDL_RenderPresent(m_renderer.get());

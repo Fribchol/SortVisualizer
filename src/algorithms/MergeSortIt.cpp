@@ -3,7 +3,6 @@
 // ============================================================
 #include "MergeSortIt.hpp"
 #include <algorithm>
-#include <format>
 #include <cstdint>
 
 namespace Algorithms
@@ -35,7 +34,7 @@ namespace Algorithms
                     ++m.arrayAccesses;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, k, -1, std::format("Merge (iterativ): {} kommt an Position {}", arr[static_cast<std::size_t>(k)], k));
+                        cb(arr, k, -1);
                     }
                 }
                 else
@@ -44,7 +43,7 @@ namespace Algorithms
                     ++m.arrayAccesses;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, k, -1, std::format("Merge (iterativ): {} kommt an Position {}", arr[static_cast<std::size_t>(k)], k));
+                        cb(arr, k, -1);
                     }
                 }
                 ++k;
@@ -56,7 +55,7 @@ namespace Algorithms
                 ++m.arrayAccesses;
 
                 if constexpr (EnableVisuals) {
-                    cb(arr, k, -1, std::format("Rest links: {} an Position {}", arr[static_cast<std::size_t>(k)], k));
+                    cb(arr, k, -1);
                 }
                 ++k;
             }

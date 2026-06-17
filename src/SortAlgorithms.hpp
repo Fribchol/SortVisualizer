@@ -11,14 +11,13 @@
 #include <vector>       // std::vector
 
 // ============================================================
-// SortStep – Snapshot eines Sortierschritts
+// SortStep – Snapshot eines Sortierschritts (ohne Text-Aktion)
 // ============================================================
 struct SortStep
 {
     std::vector<std::int32_t> array;
     std::int32_t              indexA{-1};
     std::int32_t              indexB{-1};
-    std::string               action;
 };
 
 // ============================================================
@@ -48,13 +47,12 @@ struct LiveMetrics
 };
 
 // ============================================================
-// StepCallback – Callback-Typ für Sortierschritte
+// StepCallback – Callback-Typ für Sortierschritte (ohne Action-String)
 // ============================================================
 using StepCallback = std::function<void(
     const std::vector<std::int32_t>& arr,
     std::int32_t                     a,
-    std::int32_t                     b,
-    std::string_view                 action
+    std::int32_t                     b
 )>;
 
 namespace SortAlgorithms

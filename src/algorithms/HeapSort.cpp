@@ -3,7 +3,6 @@
 // ============================================================
 #include "HeapSort.hpp"
 #include <algorithm>
-#include <format>
 #include <cstdint>
 
 namespace Algorithms
@@ -41,9 +40,7 @@ namespace Algorithms
                     m.arrayAccesses += 2;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, current, largest, std::format(
-                            "{} nach oben getauscht mit {}",
-                            arr[static_cast<std::size_t>(largest)], arr[static_cast<std::size_t>(current)]));
+                        cb(arr, current, largest);
                     }
 
                     // Nächste Iteration statt Rekursion
@@ -73,7 +70,7 @@ namespace Algorithms
                 m.arrayAccesses += 2;
 
                 if constexpr (EnableVisuals) {
-                    cb(arr, 0, i, std::format("Verschiebe Maximum {} an Position {}", arr[static_cast<std::size_t>(i)], i));
+                    cb(arr, 0, i);
                 }
 
                 heapify<EnableVisuals>(arr, i, 0, cb, m);

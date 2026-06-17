@@ -3,7 +3,6 @@
 // ============================================================
 #include "MergeSortRec.hpp"
 #include <algorithm>
-#include <format>
 #include <cstdint>
 
 namespace Algorithms
@@ -40,7 +39,7 @@ namespace Algorithms
                     ++m.arrayAccesses;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, static_cast<std::int32_t>(k), -1, std::format("Merge: {} an Pos {}", arr[k], k));
+                        cb(arr, static_cast<std::int32_t>(k), -1);
                     }
                 }
                 else
@@ -49,7 +48,7 @@ namespace Algorithms
                     ++m.arrayAccesses;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, static_cast<std::int32_t>(k), -1, std::format("Merge: {} an Pos {}", arr[k], k));
+                        cb(arr, static_cast<std::int32_t>(k), -1);
                     }
                 }
                 ++k;
