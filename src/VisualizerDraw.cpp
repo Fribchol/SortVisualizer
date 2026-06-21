@@ -13,17 +13,61 @@
 namespace {
     constexpr std::int32_t WIN_W     = 1400;
     constexpr std::int32_t WIN_H     = 860;
+    constexpr float        METRICS_W = 380.0f; // Breite des rechten Erklärungsfensters
     constexpr float        UI_H      = 170.0f;
     constexpr float        VIS_X     = 10.0f;
     constexpr float        VIS_Y     = 10.0f;
-    constexpr float        VIS_W     = static_cast<float>(WIN_W) - 20.0f; // Volle Breite über den Bildschirm
+    constexpr float        VIS_W     = static_cast<float>(WIN_W) - METRICS_W - 20.0f; // Breite des linken Diagramms
     constexpr float        VIS_H     = static_cast<float>(WIN_H) - UI_H - 20.0f;
+    constexpr float        MET_X     = static_cast<float>(WIN_W) - METRICS_W;
+    constexpr float        MET_H     = static_cast<float>(WIN_H) - UI_H;
 
     struct SdlSurfaceDeleter { void operator()(SDL_Surface* s) const noexcept { SDL_DestroySurface(s); } };
     struct SdlTextureDeleter { void operator()(SDL_Texture* t) const noexcept { SDL_DestroyTexture(t); } };
 
     using SurfacePtr = std::unique_ptr<SDL_Surface, SdlSurfaceDeleter>;
     using TexturePtr = std::unique_ptr<SDL_Texture, SdlTextureDeleter>;
+
+    // Didaktisch fundierte Erklärungen basierend auf Informatik-Skripten / Vorlesung (Lernmodus)
+    std::string getStepDescription(Algorithm algo, std::int32_t valA, std::int32_t valB, std::int32_t a, std::int32_t b, bool swapped)
+    {
+        // Wenn kein Index aktiv ist (Ausgangslage)
+        if (a < 0 && b < 0) return "Initialer Zustand: Das Array ist unsortiert.";
+
+        switch (algo) {
+            case Algorithm::QuickSort:
+                // Wenn B ebenfalls >= 0 ist, findet ein direkter Vergleich/Tausch statt (Lomuto Partition)
+                if (b >= 0) {
+                    if (swapped) {
+                        return std::format("[Quicksort - Teile & Herrsche]\nLomuto Partition:\nElement an Index {} (Wert: {}) ist kleiner oder gleich dem Pivot-Element an Index {}.\nDie Elemente werden vertauscht, um es links einzuordnen.", a, valA, b);
+                    } else {
+                        return std::format("[Quicksort - Teile & Herrsche]\nLomuto Partition:\nPrüfe Element an Index {} (Wert: {}) gegen Pivotelement an Index {}.\nEs ist größer als das Pivot und verbleibt in der rechten Partition.", a, valA, b);
+                    }
+                }
+                return std::format("[Quicksort - Teile & Herrsche]\nPivotierung/Partitionierung:\nAktiver Index wird verarbeitet: Index {} (Wert: {}).", a, valA);
+
+            case Algorithm::MergeSortRec:
+            case Algorithm::MergeSortIt:
+                return std::format("[MergeSort - Teile & Herrsche]\nVerschmelzen (Merge / Divide & Conquer):\nZwei sortierte Teilstrukturen werden im Hilfsarray zusammengefügt.\nAktives Element an Position {}.", a);
+
+            case Algorithm::HeapSort:
+                return std::format("[HeapSort - Binärer Heap]\nMax-Heap Eigenschaft:\nVertausche Wurzelelement an Index {} mit dem Blatt. Aktueller Wert: {}.", a, valA);
+
+            case Algorithm::RadixSort:
+                return std::format("[RadixSort - Ziffernweise Sortierung]\nStabile Sortierung in Buckets:\nVerteile und sortiere Schlüssel basierend auf dem Ziffernwert (von LSB zu MSB).\nDurchlauf/Index: {}.", a);
+
+            case Algorithm::CountingSort:
+                return std::format("[CountingSort - Häufigkeitsanalyse]\nAusgabearray aufbauen:\nSetze ermittelte Zahl basierend auf Häufigkeiten an finale Position.\nAktueller Index: {}.", a);
+
+            case Algorithm::BubbleSort:
+                if (swapped)
+                    return std::format("[BubbleSort - Nachbarsortierung]\nPaarweiser Vergleich:\nVergleiche Nachbarn. Bedingung erfüllt: Werte getauscht. Größeres Element steigt nach rechts auf.");
+                return std::format("[BubbleSort - Nachbarsortierung]\nPaarweiser Vergleich:\nBenachbarte Elemente sind sortiert. Kein Tausch erforderlich.");
+
+            default:
+                return std::format("Führe Teilschritt an Position {} und {} aus.", a, b);
+        }
+    }
 }
 
 void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font)
@@ -163,6 +207,9 @@ void Visualizer::drawBarsView()
         }
     }
 
+    SDL_Rect clipRect = { static_cast<std::int32_t>(VIS_X), static_cast<std::int32_t>(VIS_Y), static_cast<std::int32_t>(VIS_W), static_cast<std::int32_t>(VIS_H) };
+    SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
+
     for (auto i = 0; i < static_cast<std::int32_t>(m_array.size()); ++i)
     {
         float barH = (static_cast<float>(m_array[static_cast<std::size_t>(i)]) / maxVal) * effectiveVisHeight;
@@ -196,6 +243,7 @@ void Visualizer::drawBarsView()
             drawText(std::format("{}", m_array[static_cast<std::size_t>(i)]), bx + 2.0f, by - 15.0f, textColor, m_fontTiny.get());
         }
     }
+    SDL_SetRenderClipRect(m_renderer.get(), nullptr);
 }
 
 void Visualizer::drawNumbersView()
@@ -293,6 +341,80 @@ void Visualizer::drawNumbersView()
     SDL_SetRenderClipRect(m_renderer.get(), nullptr);
 }
 
+void Visualizer::drawMetricsPanel()
+{
+    // Rechter, fester Bereich als Textfenster / Erklärungsfenster
+    SDL_SetRenderDrawColor(m_renderer.get(), 18, 18, 28, 255);
+    SDL_FRect bgRect{MET_X, 0.0f, METRICS_W, MET_H};
+    SDL_RenderFillRect(m_renderer.get(), &bgRect);
+
+    drawText("Ablauf-Historie (Lernmodus):", MET_X + 15.0f, 15.0f, {120, 200, 255, 255}, m_fontLarge.get());
+    SDL_SetRenderDrawColor(m_renderer.get(), 60, 60, 90, 255);
+    SDL_RenderLine(m_renderer.get(), static_cast<std::int32_t>(MET_X + 15.0f), 42, static_cast<std::int32_t>(MET_X + METRICS_W - 15.0f), 42);
+
+    // SDL3 konformes Clipping-Rechteck setzen
+    SDL_Rect clipRect = { static_cast<std::int32_t>(MET_X), 45, static_cast<std::int32_t>(METRICS_W), static_cast<std::int32_t>(MET_H - 45) };
+    SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    constexpr float lineH = 70.0f; // 70 Pixel hoher Block pro Zeile
+    constexpr std::int32_t maxLines = static_cast<std::int32_t>((MET_H - 60.0f) / lineH);
+
+    const std::int32_t totalSteps = m_history.empty() ? 0 : m_historyIndex + 1;
+
+    if (m_sorting && (m_liveMode || m_historyIndex == static_cast<std::int32_t>(m_history.size()) - 1)) {
+        m_explanationScrollY = std::max(0, totalSteps - maxLines);
+    }
+
+    m_explanationScrollY = std::clamp(m_explanationScrollY, 0, std::max(0, totalSteps - maxLines));
+
+    float cy = 60.0f;
+
+    for (std::int32_t s = m_explanationScrollY; s < totalSteps && s <= m_historyIndex && (cy - 60.0f) < (maxLines * lineH); ++s)
+    {
+        const auto& step = m_history[static_cast<std::size_t>(s)];
+
+        std::vector<std::int32_t> prevArr;
+        if (s > 0) prevArr = m_history[static_cast<std::size_t>(s) - 1].array;
+        else prevArr = step.array;
+
+        std::int32_t valA = 0;
+        std::int32_t valB = 0;
+        bool valuesSwapped = false;
+
+        if (step.indexA >= 0 && static_cast<std::size_t>(step.indexA) < step.array.size()) {
+            valA = step.array[static_cast<std::size_t>(step.indexA)];
+        }
+        if (step.indexB >= 0 && static_cast<std::size_t>(step.indexB) < step.array.size()) {
+            valB = step.array[static_cast<std::size_t>(step.indexB)];
+        }
+
+        if (s > 0 && step.indexA >= 0 && static_cast<std::size_t>(step.indexA) < prevArr.size()) {
+            std::int32_t prevValA = prevArr[static_cast<std::size_t>(step.indexA)];
+            if (prevValA != valA) valuesSwapped = true;
+        }
+
+        std::string actionDesc = getStepDescription(m_algorithm, valA, valB, step.indexA, step.indexB, valuesSwapped);
+        bool isActiveStep = (s == m_historyIndex);
+
+        if (isActiveStep) {
+            SDL_SetRenderDrawColor(m_renderer.get(), 35, 55, 85, 255);
+            SDL_FRect activeLine{MET_X + 5.0f, cy - 2.0f, METRICS_W - 10.0f, lineH - 4.0f};
+            SDL_RenderFillRect(m_renderer.get(), &activeLine);
+        }
+
+        drawText(std::format("{:>3}.", s + 1), MET_X + 10.0f, cy + 10.0f, isActiveStep ? SDL_Color{255, 215, 80, 255} : SDL_Color{120, 140, 160, 255}, m_fontSmall.get());
+
+        float textH = 0.0f;
+        drawTextWrapped(actionDesc, MET_X + 45.0f, cy + 2.0f, METRICS_W - 60.0f, isActiveStep ? SDL_Color{255, 255, 255, 255} : SDL_Color{180, 190, 210, 255}, m_fontSmall.get(), textH);
+
+        cy += lineH;
+    }
+
+    SDL_SetRenderClipRect(m_renderer.get(), nullptr);
+}
+
 void Visualizer::drawButtons()
 {
     auto drawBtn = [this](const Button& btn, bool enabled = true) {
@@ -326,6 +448,15 @@ void Visualizer::drawButtons()
     drawBtn(m_stepFwdButton, (!m_liveMode && (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1 || (!m_sorting && m_historyIndex == 0))));
     drawBtn(m_stepBackButton, (m_historyIndex > 0 && !m_liveMode));
     drawBtn(m_randomButton, !m_sorting);
+
+    drawText("Geschw.:", m_speedSliderBg.x - 75.0f, m_speedSliderBg.y + 5.0f, {200, 200, 220, 255}, m_fontSmall.get());
+    drawText("Array-n:", m_sizeSliderBg.x - 65.0f, m_sizeSliderBg.y + 5.0f, {200, 200, 220, 255}, m_fontSmall.get());
+
+    drawBtn(m_caseRandomBtn,  !m_sorting);
+    drawBtn(m_caseSortedBtn,  !m_sorting);
+    drawBtn(m_caseReverseBtn, !m_sorting);
+    drawBtn(m_caseEqualBtn,   !m_sorting);
+
     drawBtn(m_viewBarsButton);
     drawBtn(m_viewNumsButton);
     drawBtn(m_btnBackToMenu, !m_sorting);
@@ -337,7 +468,7 @@ void Visualizer::drawButtons()
     SDL_FRect sThumb = {sThumbX - 5.0f, m_speedSliderBg.y - 5.0f, 10.0f, m_speedSliderBg.h + 10.0f};
     SDL_SetRenderDrawColor(m_renderer.get(), 100, 140, 200, 255);
     SDL_RenderFillRect(m_renderer.get(), &sThumb);
-    drawText(std::format("{} ms", m_delayMs), m_speedSliderBg.x, m_speedSliderBg.y - 25.0f, {200, 200, 200, 255}, m_fontLarge.get());
+    drawText(std::format("{} ms", m_delayMs), m_speedSliderBg.x + m_speedSliderBg.w + 12.0f, m_speedSliderBg.y + 2.0f, {200, 200, 200, 255}, m_fontSmall.get());
 
     SDL_SetRenderDrawColor(m_renderer.get(), 30, 30, 45, 255);
     SDL_RenderFillRect(m_renderer.get(), &m_sizeSliderBg);
@@ -346,7 +477,7 @@ void Visualizer::drawButtons()
     SDL_FRect nThumb = {nThumbX - 5.0f, m_sizeSliderBg.y - 5.0f, 10.0f, m_sizeSliderBg.h + 10.0f};
     SDL_SetRenderDrawColor(m_renderer.get(), 200, 140, 100, 255);
     SDL_RenderFillRect(m_renderer.get(), &nThumb);
-    drawText(std::format("n={}", m_arraySize), m_sizeSliderBg.x, m_sizeSliderBg.y - 25.0f, {200, 200, 200, 255}, m_fontLarge.get());
+    drawText(std::format("n={}", m_arraySize), m_sizeSliderBg.x + m_sizeSliderBg.w + 12.0f, m_sizeSliderBg.y + 2.0f, {200, 200, 200, 255}, m_fontSmall.get());
 }
 
 void Visualizer::draw()
@@ -360,13 +491,16 @@ void Visualizer::draw()
         drawSettings();
     } else if (m_appState == AppState::Visualizer) {
         SDL_SetRenderDrawColor(m_renderer.get(), 70, 70, 100, 255);
-        SDL_RenderLine(m_renderer.get(), 0, WIN_H - static_cast<std::int32_t>(UI_H), WIN_W, WIN_H - static_cast<std::int32_t>(UI_H));
+        SDL_RenderLine(m_renderer.get(), 0.0f, WIN_H - UI_H, WIN_W, WIN_H - UI_H);
+
+        SDL_RenderLine(m_renderer.get(), MET_X, 0.0f, MET_X, WIN_H - UI_H);
 
         if (m_viewMode == ViewMode::Bars) {
             drawBarsView();
         } else {
             drawNumbersView();
         }
+        drawMetricsPanel();
         drawButtons();
     }
     SDL_RenderPresent(m_renderer.get());

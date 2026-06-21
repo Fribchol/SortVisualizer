@@ -1,6 +1,6 @@
-// ============================================================
+
 // RadixSort.cpp – LSD RadixSort, Basis 10
-// ============================================================
+
 #include "RadixSort.hpp"
 #include <algorithm>
 #include <array>
@@ -10,9 +10,9 @@ namespace Algorithms
 {
     namespace
     {
-        // ============================================================
+
         // radixSortImpl – Kernlogik als Template
-        // ============================================================
+
         template <bool EnableVisuals>
         void radixSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {
@@ -58,9 +58,9 @@ namespace Algorithms
         }
     }
 
-    // ============================================================
+
     // radixSort – Öffentliche Schnittstelle
-    // ============================================================
+
     void radixSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
         if (arr.empty()) return;

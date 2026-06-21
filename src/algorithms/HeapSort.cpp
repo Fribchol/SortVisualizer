@@ -1,6 +1,6 @@
-// ============================================================
-// HeapSort.cpp – in-place Max-Heap (Iterative Version)
-// ============================================================
+
+// HeapSort.cpp – in-place Max-Heap
+
 #include "HeapSort.hpp"
 #include <algorithm>
 #include <cstdint>
@@ -9,9 +9,9 @@ namespace Algorithms
 {
     namespace
     {
-        // ============================================================
+
         // heapify – Iterativ, um Rekursion zu vermeiden
-        // ============================================================
+
         template <bool EnableVisuals>
         void heapify(std::vector<std::int32_t>& arr,
                      std::int32_t               n,
@@ -51,9 +51,9 @@ namespace Algorithms
             }
         }
 
-        // ============================================================
+
         // heapSortImpl – Kernlogik
-        // ============================================================
+
         template <bool EnableVisuals>
         void heapSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {

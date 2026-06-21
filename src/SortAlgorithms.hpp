@@ -1,13 +1,12 @@
-// ============================================================
+
 // SortAlgorithms.hpp
 // Zentrale Typen, Structs und Dispatcher-Deklarationen
-// ============================================================
+
 #pragma once
 
 #include <cstdint>      // std::int32_t, std::uint64_t
 #include <functional>   // std::function
 #include <string>       // std::string
-#include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
 // ============================================================

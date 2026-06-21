@@ -1,6 +1,6 @@
-// ============================================================
+
 // SortAlgorithms.cpp – Dispatcher + AlgoInfo Tabelle
-// ============================================================
+
 #include "SortAlgorithms.hpp"
 #include "algorithms/QuickSort.hpp"
 #include "algorithms/MergeSortRec.hpp"

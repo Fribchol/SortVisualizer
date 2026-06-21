@@ -1,4 +1,4 @@
-// ============================================================
+
 // main.cpp – Einstiegspunkt (GUI & CLI Dual-Mode)
 //
 // C++20 Features & Modernisierungen:
@@ -8,7 +8,7 @@
 // │ std::unique_ptr  │ Memory-Safety für das Visualizer-Objekt │
 // │ std::from_chars  │ Modernes, allokationsfreies Parsing     │
 // └──────────────────┴─────────────────────────────────────────┘
-// ============================================================
+
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
 #include <SDL3/SDL.h>

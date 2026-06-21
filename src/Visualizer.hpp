@@ -16,9 +16,10 @@
 #include <vector>
 #include "SortAlgorithms.hpp"
 
-// ── App Status ───────────────────────────────────────────────
+// ── App Status & Spezialszenarien ────────────────────────────
 enum class AppState  : std::uint8_t { MainMenu, Settings, Visualizer };
 enum class ViewMode  : std::uint8_t { Bars, Numbers };
+enum class SortCase  : std::uint8_t { Random, Sorted, Reverse, Equal };
 enum class Algorithm : std::uint8_t
 {
     QuickSort, MergeSortRec, MergeSortIt,
@@ -78,6 +79,7 @@ private:
     std::vector<std::int32_t> m_array;
     Algorithm     m_algorithm {Algorithm::QuickSort};
     ViewMode      m_viewMode  {ViewMode::Bars};
+    SortCase      m_sortCase  {SortCase::Random};
     std::int32_t  m_arraySize {20};
     bool          m_running   {true};
     bool          m_sorting   {false};
@@ -117,6 +119,7 @@ private:
     std::vector<Button> m_algoButtons;
     Button m_startButton, m_stopButton, m_cancelButton, m_stepBackButton, m_stepFwdButton;
     Button m_randomButton;
+    Button m_caseRandomBtn, m_caseSortedBtn, m_caseReverseBtn, m_caseEqualBtn;
     Button m_viewBarsButton, m_viewNumsButton;
     Button m_btnBackToMenu, m_btnBenchmark;
 
@@ -124,6 +127,7 @@ private:
     void initSDL();
     void initButtons();
     void fillRandom();
+    void fillSpecialCase(SortCase sc);
     void startLive();
     void startStepping();
     void joinThread();

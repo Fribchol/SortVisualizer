@@ -1,6 +1,5 @@
-// ============================================================
 // Visualizer.cpp – Konstruktor, SDL-Init, Thread-Logik
-// ============================================================
+
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
 
@@ -87,8 +86,9 @@ void Visualizer::initButtons()
     constexpr float row2Y = WIN_H - UI_H + 65.0f;
     constexpr float row3Y = WIN_H - UI_H + 115.0f;
 
-    m_speedSliderBg = {630.0f, row2Y, 150.0f, 20.0f};
-    m_sizeSliderBg  = {10.0f,  row3Y, 130.0f, 20.0f};
+    // Schieberegler nach rechts verschoben, um Überlappungen mit den Zahlen-Ansicht-Scrollbalken auszuschließen
+    m_speedSliderBg = { 680.0f, row2Y, 150.0f, 20.0f };
+    m_sizeSliderBg  = { 1050.0f, row2Y, 150.0f, 20.0f };
 
     static constexpr std::array<std::string_view, 7> labels
     {{ "QuickSort", "MergeSort (rek)", "MergeSort (it)",
@@ -100,17 +100,23 @@ void Visualizer::initButtons()
         bx += 175.0f;
     }
 
-    m_startButton     = {10.0f,  row2Y, 100.0f, 40.0f, "Start",  false};
-    m_stopButton      = {120.0f, row2Y, 100.0f, 40.0f, "Stop",   false};
-    m_cancelButton    = {230.0f, row2Y, 110.0f, 40.0f, "Abbruch",false};
-    m_stepBackButton  = {350.0f, row2Y,  70.0f, 40.0f, "  < ",   false};
-    m_stepFwdButton   = {430.0f, row2Y,  70.0f, 40.0f, "  > ",   false};
-    m_randomButton    = {510.0f, row2Y, 110.0f, 40.0f, "Random", false};
+    m_startButton     = {10.0f,  row2Y, 90.0f, 40.0f, "Start",  false};
+    m_stopButton      = {110.0f, row2Y, 90.0f, 40.0f, "Pause",  false};
+    m_cancelButton    = {210.0f, row2Y, 90.0f, 40.0f, "Abbruch",false};
+    m_stepBackButton  = {310.0f, row2Y, 65.0f, 40.0f, "  < ",   false};
+    m_stepFwdButton   = {380.0f, row2Y, 65.0f, 40.0f, "  > ",   false};
+    m_randomButton    = {455.0f, row2Y, 90.0f, 40.0f, "Zufall",  false};
 
-    m_viewBarsButton  = {160.0f, row3Y, 110.0f, 35.0f, "Balken", true };
-    m_viewNumsButton  = {280.0f, row3Y, 110.0f, 35.0f, "Zahlen", false};
-    m_btnBackToMenu   = {400.0f, row3Y, 140.0f, 35.0f, "Hauptmenü", false};
-    m_btnBenchmark    = {550.0f, row3Y, 160.0f, 35.0f, "Shell Benchmark", false};
+    // Szenarien-Buttons (Spezialfälle) in Reihe 3 untergebracht
+    m_caseRandomBtn   = { 10.0f, row3Y, 120.0f, 35.0f, "S: Zufall",  true  };
+    m_caseSortedBtn   = {135.0f, row3Y, 120.0f, 35.0f, "S: Aufsteigend", false};
+    m_caseReverseBtn  = {260.0f, row3Y, 120.0f, 35.0f, "S: Absteigend", false};
+    m_caseEqualBtn    = {385.0f, row3Y, 120.0f, 35.0f, "S: Gleichgroß", false};
+
+    m_viewBarsButton  = {535.0f, row3Y, 100.0f, 35.0f, "Balken", true };
+    m_viewNumsButton  = {645.0f, row3Y, 100.0f, 35.0f, "Zahlen", false};
+    m_btnBackToMenu   = {755.0f, row3Y, 130.0f, 35.0f, "Hauptmenü", false};
+    m_btnBenchmark    = {895.0f, row3Y, 150.0f, 35.0f, "Shell Benchmark", false};
 }
 
 void Visualizer::fillRandom()
@@ -121,6 +127,54 @@ void Visualizer::fillRandom()
 
     m_array.resize(static_cast<std::size_t>(m_arraySize));
     std::ranges::generate(m_array, [&]{ return dist(rng); });
+
+    m_history.clear();
+    m_metrics        = {};
+    m_highlightA     = -1;
+    m_highlightB     = -1;
+    m_stopRequested  = false;
+    m_liveMode       = false;
+    m_sorting        = false;
+
+    m_explanationScrollY = 0;
+    m_explanationScrollX = 0.0f;
+    m_numbersScrollY = 0;
+    m_numbersScrollX = 0.0f;
+    m_autoScrollNumbers = true;
+
+    m_finalStepForIndex.clear();
+    m_history.push_back({m_array, -1, -1});
+    m_historyIndex = 0;
+    m_sortCase = SortCase::Random;
+}
+
+void Visualizer::fillSpecialCase(SortCase sc)
+{
+    joinThread();
+    m_sortCase = sc;
+    m_array.clear();
+    m_array.resize(static_cast<std::size_t>(m_arraySize));
+
+    if (sc == SortCase::Sorted) {
+        for (std::int32_t i = 0; i < m_arraySize; ++i) {
+            m_array[static_cast<std::size_t>(i)] = 5 + (i * 20);
+        }
+    }
+    else if (sc == SortCase::Reverse) {
+        for (std::int32_t i = 0; i < m_arraySize; ++i) {
+            m_array[static_cast<std::size_t>(i)] = 5 + ((m_arraySize - 1 - i) * 20);
+        }
+    }
+    else if (sc == SortCase::Equal) {
+        std::int32_t fixedValue = 250;
+        for (auto& val : m_array) {
+            val = fixedValue;
+        }
+    }
+    else {
+        fillRandom();
+        return;
+    }
 
     m_history.clear();
     m_metrics        = {};

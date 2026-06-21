@@ -1,13 +1,11 @@
-// ============================================================
-// BubbleSort.cpp
-//
+
 // C++20 Features & Modernisierungen:
 // ┌─────────────────────┬──────────────────────────────────────┐
 // │ Anonymer Namespace  │ Verhindert Linker-Konflikte          │
 // │ if constexpr        │ Compile-Time Branching               │
 // │ std::int32_t        │ Explizite Typen aus <cstdint>        │
 // └─────────────────────┴──────────────────────────────────────┘
-// ============================================================
+
 #include "BubbleSort.hpp"
 #include <utility>
 #include <cstdint>
@@ -16,9 +14,9 @@ namespace Algorithms
 {
     namespace
     {
-        // ============================================================
+
         // bubbleSortImpl – Kernlogik als Template
-        // ============================================================
+
         template <bool EnableVisuals>
         void bubbleSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {
@@ -59,9 +57,9 @@ namespace Algorithms
         }
     }
 
-    // ============================================================
+
     // bubbleSort – Öffentliche Schnittstelle
-    // ============================================================
+
     void bubbleSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
         if (arr.empty()) return;

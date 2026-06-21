@@ -1,7 +1,7 @@
-// ============================================================
+
 // QuickSort.cpp – Lomuto Partition, rekursiv
-// ============================================================
-// NOLINTBEGIN(readability-function-cognitive-complexity, bugprone-recursive-recursion, misc-no-recursion, bugprone-incorrect-roundings)
+
+
 #include "QuickSort.hpp"
 #include <algorithm>
 #include <cstdint>
@@ -10,9 +10,9 @@ namespace Algorithms
 {
     namespace
     {
-        // ============================================================
+
         // partition – Lomuto-Partition als Template
-        // ============================================================
+
         template <bool EnableVisuals>
         std::size_t partition(std::vector<std::int32_t>& arr,
                               std::size_t                low,
@@ -56,9 +56,9 @@ namespace Algorithms
             return static_cast<std::size_t>(i + 1);
         }
 
-        // ============================================================
+
         // quickSortRec – Rekursiver Kern
-        // ============================================================
+
         template <bool EnableVisuals>
         void quickSortRec(std::vector<std::int32_t>& arr,
                           std::size_t                lowIndex,
@@ -75,9 +75,9 @@ namespace Algorithms
         }
     }
 
-    // ============================================================
+
     // quickSort – Öffentliche Schnittstelle
-    // ============================================================
+
     void quickSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
         if (arr.empty()) return;

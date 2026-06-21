@@ -1,6 +1,6 @@
-// ============================================================
+
 // MergeSortIt.cpp – Bottom-Up MergeSort, iterativ
-// ============================================================
+
 #include "MergeSortIt.hpp"
 #include <algorithm>
 #include <cstdint>
