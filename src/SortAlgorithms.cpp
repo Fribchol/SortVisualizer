@@ -1,4 +1,3 @@
-
 // SortAlgorithms.cpp – Dispatcher + AlgoInfo Tabelle
 
 #include "SortAlgorithms.hpp"
@@ -9,12 +8,10 @@
 #include "algorithms/RadixSort.hpp"
 #include "algorithms/CountingSort.hpp"
 #include "algorithms/BubbleSort.hpp"
-
 #include <format>
 #include <array>
 #include <stdexcept>
 #include <cstdint>
-
 
 namespace SortAlgorithms
 {

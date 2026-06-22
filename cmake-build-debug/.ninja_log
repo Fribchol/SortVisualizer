@@ -1,6 +1,6 @@
 # ninja log v6
 53	8427	8038658351075833	CMakeFiles/SortVisualizer.dir/src/Visualizer.cpp.obj	8fb4400298077c8
-7	424	8038661692405250	build.ninja	e60a8971e49f2143
+7	424	8038687874928912	build.ninja	e60a8971e49f2143
 11	8060	8038658350649962	CMakeFiles/SortVisualizer.dir/src/main.cpp.obj	5289901d6e612755
 185	2720	8038658352388479	CMakeFiles/SortVisualizer.dir/src/algorithms/Quicksort.cpp.obj	e91c9074af65bb48
 7186	8924	8038658422409368	CMakeFiles/SortBenchmark.dir/src/algorithms/BubbleSort.cpp.obj	85e9b82bfce30cc7

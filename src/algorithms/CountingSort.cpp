@@ -1,4 +1,3 @@
-
 // CountingSort.cpp – O(n+k), stabil
 
 #include "CountingSort.hpp"

@@ -1,6 +1,4 @@
-// ============================================================
 // terminal_main.cpp – Interaktives Konsolen-Interface
-// ============================================================
 
 #include "SortAlgorithms.hpp"
 #include <iostream>
@@ -17,7 +15,6 @@ void runBenchmarkFor(std::uint8_t algoIndex, std::int32_t size)
     std::vector<std::int32_t> testArray(static_cast<std::size_t>(size));
 
     // Konstanten Seed für Benchmark-Vergleichbarkeit gewollt -> Warnung wird unterdrückt
-    // NOLINTNEXTLINE(cert-msc51-cpp, cppcoreguidelines-pro-type-member-init)
     std::mt19937 rng(1337);
     std::uniform_int_distribution<std::int32_t> dist(1, 1000000);
 
@@ -59,12 +56,11 @@ int main()
     std::int32_t arraySize = 50000;
 
     // Endlosschleife ist für Konsolenanwendung beabsichtigt -> Warnung unterdrücken
-    // NOLINTNEXTLINE(hicpp-no-assembler, google-readability-braces-around-statements)
     while (true)
     {
-        std::cout << "========================================" << std::endl;
-        std::cout << "       HIGH-PERFORMANCE BENCHMARK       " << std::endl;
-        std::cout << "========================================" << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::cout << "       Konsolen Benchmark       " << std::endl;
+        std::cout << "****************************************" << std::endl;
         std::cout << "Algorithmus aussuchen:" << std::endl;
         std::cout << " [0] QuickSort" << std::endl;
         std::cout << " [1] MergeSort (rekursiv)" << std::endl;
@@ -73,9 +69,9 @@ int main()
         std::cout << " [4] RadixSort" << std::endl;
         std::cout << " [5] CountingSort" << std::endl;
         std::cout << " [6] BubbleSort" << std::endl;
-        std::cout << "----------------------------------------" << std::endl;
+        std::cout << "****************************************" << std::endl;
         std::cout << " [7] Array (n) anpassen" << std::endl;
-        std::cout << "----------------------------------------" << std::endl;
+        std::cout << "****************************************" << std::endl;
         std::cout << "Aktuelles Array (n): " << arraySize << std::endl;
         std::cout << "Ihre Auswahl (0-7): ";
 

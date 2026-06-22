@@ -1,4 +1,3 @@
-
 // SortAlgorithms.hpp
 // Zentrale Typen, Structs und Dispatcher-Deklarationen
 
@@ -9,9 +8,9 @@
 #include <string>       // std::string
 #include <vector>       // std::vector
 
-// ============================================================
+
 // SortStep – Snapshot eines Sortierschritts (ohne Text-Aktion)
-// ============================================================
+
 struct SortStep
 {
     std::vector<std::int32_t> array;
@@ -19,9 +18,9 @@ struct SortStep
     std::int32_t              indexB{-1};
 };
 
-// ============================================================
+
 // AlgoInfo – Theoretische Eigenschaften eines Algorithmus
-// ============================================================
+
 struct AlgoInfo
 {
     std::string name;
@@ -34,9 +33,9 @@ struct AlgoInfo
     std::string communication;
 };
 
-// ============================================================
+
 // LiveMetrics – Live gemessene Werte während der Sortierung
-// ============================================================
+
 struct LiveMetrics
 {
     std::uint64_t comparisons   {0};
@@ -45,9 +44,8 @@ struct LiveMetrics
     double        elapsedMs     {0.0};
 };
 
-// ============================================================
+
 // StepCallback – Callback-Typ für Sortierschritte (ohne Action-String)
-// ============================================================
 using StepCallback = std::function<void(
     const std::vector<std::int32_t>& arr,
     std::int32_t                     a,
@@ -57,7 +55,6 @@ using StepCallback = std::function<void(
 namespace SortAlgorithms
 {
     [[nodiscard]] AlgoInfo getInfo(std::uint8_t algorithmIndex);
-
     // Anpassung: Übergabe per const-Referenz für exaktes Signature-Matching
     void quickSort   (std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m);
     void mergeSort   (std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m);

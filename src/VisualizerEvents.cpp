@@ -1,6 +1,5 @@
-// ============================================================
 // VisualizerEvents.cpp – Event-Handling & Interaktion
-// ============================================================
+
 #include "Visualizer.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>

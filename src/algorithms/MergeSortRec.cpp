@@ -1,29 +1,20 @@
-// ============================================================
 // MergeSortRec.cpp – Top-Down MergeSort, rekursiv (Modern C++)
-// ============================================================
 // Prinzip: "Teile und Herrsche" (Divide and Conquer)
 // 1. Teile das Problem in zwei Hälften.
 // 2. Sortiere die Hälften rekursiv.
 // 3. Verschmelze (Merge) die sortierten Hälften.
-// ============================================================
+
 
 #include "MergeSortRec.hpp"
 #include <span>
 #include <vector>
-#include <algorithm>
 #include <cstdint>
-#include <iterator>
+
 
 namespace Algorithms
 {
     namespace
     {
-        // --------------------------------------------------------
-        // mergeImpl – Verschmelzen von zwei sortierten Teilbereichen
-        // --------------------------------------------------------
-        // D.O.D. & RAII: Wir nutzen einen externen Zwischenpuffer (Buffer),
-        // um Cache-Lokalität zu garantieren und Heap-Allokationen in der Tiefe zu vermeiden.
-        // --------------------------------------------------------
         template <bool EnableVisuals>
         void mergeImpl(std::vector<std::int32_t>& arr,
                        std::span<std::int32_t>    bufferView,
@@ -103,12 +94,8 @@ namespace Algorithms
                 ++k;
             }
         }
-
-        // --------------------------------------------------------
         // mergeSortRange – Rekursive Teilung über direkte Sichten (Span)
-        // --------------------------------------------------------
         // Unterdrücke Clang-Tidy Rekursions- und Parameterwarnungen in akademischer Implementierung
-        // NOLINTBEGIN(readability-function-cognitive-complexity, bugprone-recursive-recursion, misc-no-recursion)
         template <bool EnableVisuals>
         void mergeSortRange(std::vector<std::int32_t>& arr,
                             std::span<std::int32_t>    fullBufferView,

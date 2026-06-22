@@ -1,6 +1,4 @@
-
 // QuickSort.cpp – Lomuto Partition, rekursiv
-
 
 #include "QuickSort.hpp"
 #include <algorithm>

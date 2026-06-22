@@ -1,4 +1,3 @@
-
 // main.cpp – Einstiegspunkt (GUI & CLI Dual-Mode)
 //
 // C++20 Features & Modernisierungen:
@@ -12,8 +11,7 @@
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h> // WICHTIG: Löst den "WinMain" Linker-Fehler auf Windows!
-
+#include <SDL3/SDL_main.h>
 #include <iostream>
 #include <vector>
 #include <string_view>
@@ -21,11 +19,11 @@
 #include <chrono>
 #include <format>
 #include <algorithm>
-#include <charconv>  // Für std::from_chars
-#include <cstdint>   // Für std::int32_t
+#include <charconv>
+#include <cstdint>
 #include <span>
 
-// ── Anonymer Namespace ──────────────────────────────────────
+// Anonymer Namespace
 namespace {
 
     using ArgsSpan = std::span<char*>;

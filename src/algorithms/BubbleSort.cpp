@@ -1,11 +1,3 @@
-
-// C++20 Features & Modernisierungen:
-// ┌─────────────────────┬──────────────────────────────────────┐
-// │ Anonymer Namespace  │ Verhindert Linker-Konflikte          │
-// │ if constexpr        │ Compile-Time Branching               │
-// │ std::int32_t        │ Explizite Typen aus <cstdint>        │
-// └─────────────────────┴──────────────────────────────────────┘
-
 #include "BubbleSort.hpp"
 #include <utility>
 #include <cstdint>

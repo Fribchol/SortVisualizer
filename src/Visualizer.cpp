@@ -2,7 +2,6 @@
 
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
-
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
@@ -245,8 +244,7 @@ void Visualizer::sortThreadFunc()
     m_threadFinished = true;
 }
 
-void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs)
-{
+void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs) const {
     if (!m_audioStream || maxValue == 0 || durationMs == 0 || m_volume <= 0.01f) return;
 
     const float freq = 150.0f + (static_cast<float>(value) / static_cast<float>(maxValue)) * 1350.0f;
