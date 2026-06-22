@@ -165,6 +165,107 @@ build SortVisualizer.exe: CXX_EXECUTABLE_LINKER__SortVisualizer_Debug CMakeFiles
   TARGET_IMPLIB = SortVisualizer.lib
   TARGET_PDB = SortVisualizer.pdb
 
+# =============================================================================
+# Object build statements for EXECUTABLE target SortBenchmark
+
+
+#############################################
+# Order-only phony target for SortBenchmark
+
+build cmake_object_order_depends_target_SortBenchmark: phony || .
+
+build CMakeFiles\SortBenchmark.dir\src\terminal_main.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\terminal_main.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\SortAlgorithms.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\SortAlgorithms.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\Quicksort.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\Quicksort.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\MergeSortRec.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\MergeSortRec.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\MergeSortIt.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\MergeSortIt.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\HeapSort.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\HeapSort.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\RadixSort.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\RadixSort.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\CountingSort.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\CountingSort.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+build CMakeFiles\SortBenchmark.dir\src\algorithms\BubbleSort.cpp.obj: CXX_COMPILER__SortBenchmark_unscanned_Debug C$:\Users\frieb\CLionProjects\ProjektC++\src\algorithms\BubbleSort.cpp || cmake_object_order_depends_target_SortBenchmark
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd
+  INCLUDES = -IC:\Users\frieb\CLionProjects\ProjektC++\src
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  OBJECT_FILE_DIR = CMakeFiles\SortBenchmark.dir\src\algorithms
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_PDB = SortBenchmark.pdb
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target SortBenchmark
+
+
+#############################################
+# Link the executable SortBenchmark.exe
+
+build SortBenchmark.exe: CXX_EXECUTABLE_LINKER__SortBenchmark_Debug CMakeFiles\SortBenchmark.dir\src\terminal_main.cpp.obj CMakeFiles\SortBenchmark.dir\src\SortAlgorithms.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\Quicksort.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\MergeSortRec.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\MergeSortIt.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\HeapSort.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\RadixSort.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\CountingSort.cpp.obj CMakeFiles\SortBenchmark.dir\src\algorithms\BubbleSort.cpp.obj
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -MDd
+  LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console
+  LINK_LIBRARIES = kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
+  OBJECT_DIR = CMakeFiles\SortBenchmark.dir
+  POST_BUILD = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\frieb\CLionProjects\ProjektC++\cmake-build-debug && C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug/SortBenchmark.exe -installedDir C:/vcpkg/installed/x64-windows/debug/bin -OutVariable out"
+  PRE_LINK = cd .
+  TARGET_COMPILE_PDB = CMakeFiles\SortBenchmark.dir\
+  TARGET_FILE = SortBenchmark.exe
+  TARGET_IMPLIB = SortBenchmark.lib
+  TARGET_PDB = SortBenchmark.pdb
+
 
 #############################################
 # Utility command for edit_cache
@@ -191,6 +292,8 @@ build rebuild_cache: phony CMakeFiles\rebuild_cache.util
 # =============================================================================
 # Target aliases.
 
+build SortBenchmark: phony SortBenchmark.exe
+
 build SortVisualizer: phony SortVisualizer.exe
 
 # =============================================================================
@@ -201,7 +304,7 @@ build SortVisualizer: phony SortVisualizer.exe
 #############################################
 # Folder: C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug
 
-build all: phony SortVisualizer.exe
+build all: phony SortVisualizer.exe SortBenchmark.exe
 
 # =============================================================================
 # Built-in targets

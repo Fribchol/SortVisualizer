@@ -39,30 +39,30 @@ namespace {
                 // Wenn B ebenfalls >= 0 ist, findet ein direkter Vergleich/Tausch statt (Lomuto Partition)
                 if (b >= 0) {
                     if (swapped) {
-                        return std::format("[Quicksort - Teile & Herrsche]\nLomuto Partition:\nElement an Index {} (Wert: {}) ist kleiner oder gleich dem Pivot-Element an Index {}.\nDie Elemente werden vertauscht, um es links einzuordnen.", a, valA, b);
+                        return std::format("Quicksort\nLomuto Partition:\nElement an Index {} (Wert: {}) ist kleiner oder gleich dem Pivot-Element an Index {}.\nDie Elemente werden vertauscht, um es links einzuordnen.", a, valA, b);
                     } else {
-                        return std::format("[Quicksort - Teile & Herrsche]\nLomuto Partition:\nPrüfe Element an Index {} (Wert: {}) gegen Pivotelement an Index {}.\nEs ist größer als das Pivot und verbleibt in der rechten Partition.", a, valA, b);
+                        return std::format("Quicksort\nLomuto Partition:\nPrüfe Element an Index {} (Wert: {}) gegen Pivotelement an Index {}.\nEs ist größer als das Pivot und verbleibt in der rechten Partition.", a, valA, b);
                     }
                 }
-                return std::format("[Quicksort - Teile & Herrsche]\nPivotierung/Partitionierung:\nAktiver Index wird verarbeitet: Index {} (Wert: {}).", a, valA);
+                return std::format("Quicksort\nPivotierung/Partitionierung:\nAktiver Index wird verarbeitet: Index {} (Wert: {}).", a, valA);
 
             case Algorithm::MergeSortRec:
             case Algorithm::MergeSortIt:
-                return std::format("[MergeSort - Teile & Herrsche]\nVerschmelzen (Merge / Divide & Conquer):\nZwei sortierte Teilstrukturen werden im Hilfsarray zusammengefügt.\nAktives Element an Position {}.", a);
+                return std::format("MergeSort\nVerschmelzen (Merge / Divide & Conquer):\nZwei sortierte Teilstrukturen werden im Hilfsarray zusammengefügt.\nAktives Element an Position {}.", a);
 
             case Algorithm::HeapSort:
-                return std::format("[HeapSort - Binärer Heap]\nMax-Heap Eigenschaft:\nVertausche Wurzelelement an Index {} mit dem Blatt. Aktueller Wert: {}.", a, valA);
+                return std::format("HeapSort\nMax-Heap Eigenschaft:\nVertausche Wurzelelement an Index {} mit dem Blatt. Aktueller Wert: {}.", a, valA);
 
             case Algorithm::RadixSort:
-                return std::format("[RadixSort - Ziffernweise Sortierung]\nStabile Sortierung in Buckets:\nVerteile und sortiere Schlüssel basierend auf dem Ziffernwert (von LSB zu MSB).\nDurchlauf/Index: {}.", a);
+                return std::format("RadixSort\nStabile Sortierung in Buckets:\nVerteile und sortiere Schlüssel basierend auf dem Ziffernwert (von LSB zu MSB).\nDurchlauf/Index: {}.", a);
 
             case Algorithm::CountingSort:
-                return std::format("[CountingSort - Häufigkeitsanalyse]\nAusgabearray aufbauen:\nSetze ermittelte Zahl basierend auf Häufigkeiten an finale Position.\nAktueller Index: {}.", a);
+                return std::format("CountingSort\nAusgabearray aufbauen:\nSetze ermittelte Zahl basierend auf Häufigkeiten an finale Position.\nAktueller Index: {}.", a);
 
             case Algorithm::BubbleSort:
                 if (swapped)
-                    return std::format("[BubbleSort - Nachbarsortierung]\nPaarweiser Vergleich:\nVergleiche Nachbarn. Bedingung erfüllt: Werte getauscht. Größeres Element steigt nach rechts auf.");
-                return std::format("[BubbleSort - Nachbarsortierung]\nPaarweiser Vergleich:\nBenachbarte Elemente sind sortiert. Kein Tausch erforderlich.");
+                    return std::format("BubbleSort\nPaarweiser Vergleich:\nVergleiche Nachbarn. Bedingung erfüllt: Werte getauscht. Größeres Element steigt nach rechts auf.");
+                return std::format("BubbleSort\nPaarweiser Vergleich:\nBenachbarte Elemente sind sortiert. Kein Tausch erforderlich.");
 
             default:
                 return std::format("Führe Teilschritt an Position {} und {} aus.", a, b);
@@ -208,11 +208,22 @@ void Visualizer::drawBarsView()
     }
 
     SDL_Rect clipRect = { static_cast<std::int32_t>(VIS_X), static_cast<std::int32_t>(VIS_Y), static_cast<std::int32_t>(VIS_W), static_cast<std::int32_t>(VIS_H) };
-    SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
+    SDL_SetRenderClipRect(m_renderer.get(), &clipRect); // Korrektur angewendet
 
     for (auto i = 0; i < static_cast<std::int32_t>(m_array.size()); ++i)
     {
-        float barH = (static_cast<float>(m_array[static_cast<std::size_t>(i)]) / maxVal) * effectiveVisHeight;
+        float barH{};
+        // Angepasste Logik für gleichgroße Elemente (S: Gleichgroß)
+        // Wenn alle Elemente gleich groß sind, zentriere die Balken genau auf der Hälfte (50%) der Diagrammhöhe
+        if (maxVal > 0.0f && static_cast<float>(m_array[static_cast<std::size_t>(i)]) == maxVal && *std::ranges::min_element(m_array) == m_array[static_cast<std::size_t>(i)])
+        {
+            barH = 0.5f * effectiveVisHeight;
+        }
+        else
+        {
+            barH = (static_cast<float>(m_array[static_cast<std::size_t>(i)]) / maxVal) * effectiveVisHeight;
+        }
+
         float bx   = VIS_X + static_cast<float>(i) * barW;
         float by   = VIS_Y + VIS_H - barH;
 

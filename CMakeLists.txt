@@ -8,6 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_ttf REQUIRED CONFIG)
 
+# ========================================================
+# Target 1: Der grafische SortVisualizer (mit GUI, SDL, etc.)
+# ========================================================
 add_executable(SortVisualizer
         # -- Core & Main --
         src/main.cpp
@@ -42,3 +45,30 @@ configure_file(
         ${CMAKE_BINARY_DIR}/DejaVuSans.ttf
         COPYONLY
 )
+
+# ========================================================
+# Target 2: High-Performance Konsolen-Benchmark (Terminal)
+# ========================================================
+add_executable(SortBenchmark
+        src/terminal_main.cpp
+        src/SortAlgorithms.cpp
+        src/algorithms/QuickSort.cpp
+        src/algorithms/MergeSortRec.cpp
+        src/algorithms/MergeSortIt.cpp
+        src/algorithms/HeapSort.cpp
+        src/algorithms/RadixSort.cpp
+        src/algorithms/CountingSort.cpp
+        src/algorithms/BubbleSort.cpp
+)
+
+target_include_directories(SortBenchmark PRIVATE src)
+
+# Setze Compiler-Optimierungen für maximale Performance im Terminal (ohne GUI-Overhead)
+# Diese greifen nur im Release-Modus, um Konflikte bei Runtime-Checks im Debug-Modus zu vermeiden
+if (MSVC)
+    # Visual Studio Compiler: Maximale Geschwindigkeit /O2 (nur bei Release)
+    target_compile_options(SortBenchmark PRIVATE $<$<CONFIG:Release>:/O2;/Ob2;/fp:fast>)
+else()
+    # GCC / Clang Compiler: Höchste Optimierungsstufe -O3 (nur bei Release)
+    target_compile_options(SortBenchmark PRIVATE $<$<CONFIG:Release>:-O3;-march=native>)
+endif()
