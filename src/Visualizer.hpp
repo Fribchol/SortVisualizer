@@ -1,5 +1,6 @@
+// ============================================================
 // Visualizer.hpp – Hauptklasse
-
+// ============================================================
 #pragma once
 
 #include <SDL3/SDL.h>
@@ -15,7 +16,7 @@
 #include <vector>
 #include "SortAlgorithms.hpp"
 
-// App Status & Spezialszenarien
+// ── App Status & Spezialszenarien ────────────────────────────
 enum class AppState  : std::uint8_t { MainMenu, Settings, Visualizer };
 enum class ViewMode  : std::uint8_t { Bars, Numbers };
 enum class SortCase  : std::uint8_t { Random, Sorted, Reverse, Equal };
@@ -33,18 +34,19 @@ struct Button
     bool        active{false};
 };
 
-// RAII Deleter für Smart Pointer
+// ── RAII Deleter für Smart Pointer ────────────────────────────
 struct SdlWindowDeleter   { void operator()(SDL_Window* w) const noexcept { SDL_DestroyWindow(w);   } };
 struct SdlRendererDeleter { void operator()(SDL_Renderer* r) const noexcept { SDL_DestroyRenderer(r); } };
 struct TtfFontDeleter     { void operator()(TTF_Font* f) const noexcept { TTF_CloseFont(f);       } };
+struct SdlAudioStreamDeleter { void operator()(SDL_AudioStream* s) const noexcept { SDL_DestroyAudioStream(s); } };
 
 class Visualizer
 {
 public:
     Visualizer();
-    ~Visualizer();
+    ~Visualizer() = default; // RAII: Resourcenfreigabe erfolgt vollständig über Smart Pointer
 
-    //  Rule of 5: Weder kopierbar noch verschiebbar
+    // ── Rule of 5: Weder kopierbar noch verschiebbar ──────────
     Visualizer(const Visualizer&)            = delete;
     Visualizer& operator=(const Visualizer&) = delete;
     Visualizer(Visualizer&&)                 = delete;
@@ -53,16 +55,17 @@ public:
     void run();
 
 private:
-    std::unique_ptr<SDL_Window,   SdlWindowDeleter>   m_window;
-    std::unique_ptr<SDL_Renderer, SdlRendererDeleter> m_renderer;
-    std::unique_ptr<TTF_Font,     TtfFontDeleter>     m_fontTitle;
-    std::unique_ptr<TTF_Font,     TtfFontDeleter>     m_fontLarge;
-    std::unique_ptr<TTF_Font,     TtfFontDeleter>     m_fontSmall;
-    std::unique_ptr<TTF_Font,     TtfFontDeleter>     m_fontTiny;
+    std::unique_ptr<SDL_Window,    SdlWindowDeleter>      m_window;
+    std::unique_ptr<SDL_Renderer,  SdlRendererDeleter>    m_renderer;
+    std::unique_ptr<TTF_Font,      TtfFontDeleter>        m_fontTitle;
+    std::unique_ptr<TTF_Font,      TtfFontDeleter>        m_fontLarge;
+    std::unique_ptr<TTF_Font,      TtfFontDeleter>        m_fontSmall;
+    std::unique_ptr<TTF_Font,      TtfFontDeleter>        m_fontTiny;
 
-    SDL_AudioStream* m_audioStream{nullptr};
+    // Speicherbereinigung Audio-Stream über RAII / Smart Pointer gelöst
+    std::unique_ptr<SDL_AudioStream, SdlAudioStreamDeleter> m_audioStream;
 
-    // Globale Einstellungen
+    // ── Globale Einstellungen ─────────────────────────────────
     AppState    m_appState  {AppState::MainMenu};
     bool        m_fullscreen{false};
     float       m_volume    {0.1f};
@@ -74,7 +77,7 @@ private:
     bool        m_isDraggingSize{false};
     SDL_FRect   m_sizeSliderBg{};
 
-    // Array & Zustand
+    // ── Array & Zustand ───────────────────────────────────────
     std::vector<std::int32_t> m_array;
     Algorithm     m_algorithm {Algorithm::QuickSort};
     ViewMode      m_viewMode  {ViewMode::Bars};
@@ -87,7 +90,7 @@ private:
     std::uint32_t m_delayMs   {10};
     bool          m_liveMode  {false};
 
-    // Threading & Playback
+    // ── Threading & Playback ──────────────────────────────────
     std::thread             m_sortThread;
     mutable std::mutex      m_mutex;
     std::atomic<bool>       m_stopRequested {false};
@@ -104,14 +107,14 @@ private:
     std::chrono::steady_clock::time_point m_sortStart;
     std::chrono::steady_clock::time_point m_lastStepTime;
 
-    // Scrolling Status
+    // ── Scrolling Status ──────────────────────────────────────
     std::int32_t m_explanationScrollY{0};
     float        m_explanationScrollX{0.0f};
     std::int32_t m_numbersScrollY{0};
     float        m_numbersScrollX{0.0f};
     bool         m_autoScrollNumbers{true};
 
-    // Buttons
+    // ── Buttons ───────────────────────────────────────────────
     Button m_btnMenuStart, m_btnMenuSettings, m_btnMenuQuit;
     Button m_btnSettingsFullscreen, m_btnSettingsBack;
 
@@ -122,7 +125,7 @@ private:
     Button m_viewBarsButton, m_viewNumsButton;
     Button m_btnBackToMenu, m_btnBenchmark;
 
-    // Private Methoden
+    // ── Private Methoden ──────────────────────────────────────
     void initSDL();
     void initButtons();
     void fillRandom();
@@ -132,7 +135,7 @@ private:
     void joinThread();
     void sortThreadFunc();
 
-    // Angepasste Callback-Signatur (ohne Action-String)
+    // Angepasste Callback-Signatur
     void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b);
     void playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs) const;
 
@@ -150,13 +153,8 @@ private:
 
     void draw();
 
-    void drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font *font);
-
-    void drawTextWrapped(std::string_view text, float x, float y, float maxWidth, SDL_Color color, TTF_Font *font,
-                         float &outHeight);
-
-    void drawMainMenu();
-    void drawSettings();
+    void drawMainMenu() const;
+    void drawSettings() const;
     void drawBarsView();
     void drawNumbersView();
     void drawMetricsPanel();

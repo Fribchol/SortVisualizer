@@ -1,7 +1,19 @@
+// ============================================================
 // CountingSort.cpp – O(n+k), stabil
+// ============================================================
+// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
+// ┌───────────────────┬────────────────────────────────────────────────────────┐
+// │ Cache-Lokalität   │ Sequenzielle Speichernutzung, das Count-Array wird     │
+// │                   │ linear aufgebaut und sequenziell ausgelesen.           │
+// ├───────────────────┼────────────────────────────────────────────────────────┤
+// │ RAII              │ Vektoren werden lokal verwaltet und Speicherlecks      │
+// │                   │ durch automatische Freigabe verhindert.                │
+// └───────────────────┴────────────────────────────────────────────────────────┘
 
 #include "CountingSort.hpp"
 #include <cstdint>
+#include <algorithm>
+#include <iterator>
 
 namespace Algorithms
 {
@@ -10,8 +22,11 @@ namespace Algorithms
         template <bool EnableVisuals>
         void countingSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {
-            const auto maxVal = std::ranges::max(arr);
-            const auto minVal = std::ranges::min(arr);
+            // Verwendung von std::max_element und std::min_element für maximale Kompatibilität
+            // (auch unter restriktiven Toolchains wie MinGW-Clang)
+            const auto maxVal = *std::ranges::max_element(arr.begin(), arr.end());
+            const auto minVal = *std::ranges::min_element(arr.begin(), arr.end());
+
             // Sicherer Cast der Differenz zur Vermeidung von Precision-Loss
             const auto range  = static_cast<std::size_t>(static_cast<std::int64_t>(maxVal) - minVal + 1);
 

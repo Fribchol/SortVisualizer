@@ -1,4 +1,14 @@
+// ============================================================
 // Visualizer.cpp – Konstruktor, SDL-Init, Thread-Logik
+// ============================================================
+// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
+// ┌───────────────────┬────────────────────────────────────────────────────────┐
+// │ Cache-Lokalität   │ Sequenzielle Speichernutzung, Heap-Zuweisung wird in   │
+// │                   │ lokalen Containern (std::vector, std::array) gekapselt.│
+// ├───────────────────┼────────────────────────────────────────────────────────┤
+// │ RAII              │ Speicherbereinigung erfolgt deterministisch beim       │
+// │                   │ Verlassen des Scopes (Stack-basierte Freigabe).        │
+// └───────────────────┴────────────────────────────────────────────────────────┘
 
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
@@ -35,11 +45,7 @@ Visualizer::Visualizer()
     fillRandom();
 }
 
-Visualizer::~Visualizer()
-{
-    joinThread();
-    if (m_audioStream) SDL_DestroyAudioStream(m_audioStream);
-}
+// Der Destruktor wird im Header über = default verwaltet.
 
 void Visualizer::initSDL()
 {
@@ -66,13 +72,17 @@ void Visualizer::initSDL()
         throw std::runtime_error(std::format("Font: {}", SDL_GetError()));
 
     SDL_AudioSpec audioSpec = { SDL_AUDIO_F32, 1, 44100 };
-    m_audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audioSpec, nullptr, nullptr);
-    if (m_audioStream) SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(m_audioStream));
+    // Zuweisung an den Smart Pointer via .reset()
+    m_audioStream.reset(SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audioSpec, nullptr, nullptr));
+    if (m_audioStream) {
+        // Raw-Pointer wird mittels .get() übergeben
+        SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(m_audioStream.get()));
+    }
 }
 
 void Visualizer::initButtons()
 {
-    float centerX = WIN_W / 2.0f - 125.0f;
+    constexpr float centerX = WIN_W / 2.0f - 125.0f;
     m_btnMenuStart    = {centerX, 300.0f, 250.0f, 60.0f, "Visualizer Starten", false};
     m_btnMenuSettings = {centerX, 400.0f, 250.0f, 60.0f, "Einstellungen", false};
     m_btnMenuQuit     = {centerX, 500.0f, 250.0f, 60.0f, "Beenden", false};
@@ -85,7 +95,7 @@ void Visualizer::initButtons()
     constexpr float row2Y = WIN_H - UI_H + 65.0f;
     constexpr float row3Y = WIN_H - UI_H + 115.0f;
 
-    // Schieberegler nach rechts verschoben, um Überlappungen mit den Zahlen-Ansicht-Scrollbalken auszuschließen
+    // Schieberegler nach rechts verschoben
     m_speedSliderBg = { 680.0f, row2Y, 150.0f, 20.0f };
     m_sizeSliderBg  = { 1050.0f, row2Y, 150.0f, 20.0f };
 
@@ -165,8 +175,8 @@ void Visualizer::fillSpecialCase(SortCase sc)
         }
     }
     else if (sc == SortCase::Equal) {
-        std::int32_t fixedValue = 250;
         for (auto& val : m_array) {
+            constexpr std::int32_t fixedValue = 250;
             val = fixedValue;
         }
     }
@@ -216,7 +226,7 @@ void Visualizer::sortThreadFunc()
             case Algorithm::QuickSort:    SortAlgorithms::quickSort   (m_array, cb, m_metrics); break;
             case Algorithm::MergeSortRec: SortAlgorithms::mergeSort   (m_array, cb, m_metrics); break;
             case Algorithm::MergeSortIt:  SortAlgorithms::mergeSortIt (m_array, cb, m_metrics); break;
-            case Algorithm::HeapSort:     SortAlgorithms::heapSort    (m_array, cb, m_metrics); break;
+            case Algorithm::HeapSort:     SortAlgorithms::heapSort   (m_array, cb, m_metrics); break; // Sichergestellt über expliziten Scope
             case Algorithm::RadixSort:    SortAlgorithms::radixSort   (m_array, cb, m_metrics); break;
             case Algorithm::CountingSort: SortAlgorithms::countingSort(m_array, cb, m_metrics); break;
             case Algorithm::BubbleSort:   SortAlgorithms::bubbleSort  (m_array, cb, m_metrics); break;
@@ -227,14 +237,16 @@ void Visualizer::sortThreadFunc()
             if (!m_history.empty()) {
                 const auto& finalArray = m_history.back().array;
                 m_finalStepForIndex.assign(finalArray.size(), -1);
-                for (std::size_t i = 0; i < finalArray.size(); ++i) {
+
+                for (std::int32_t i = 0; i < static_cast<std::int32_t>(finalArray.size()); ++i) {
                     std::int32_t lastWrong = -1;
-                    for (std::size_t s = 0; s < m_history.size(); ++s) {
-                        if (i < m_history[s].array.size() && m_history[s].array[i] != finalArray[i]) {
-                            lastWrong = static_cast<std::int32_t>(s);
+                    for (std::int32_t s = 0; s < static_cast<std::int32_t>(m_history.size()); ++s) {
+                        if (static_cast<std::size_t>(i) < m_history[static_cast<std::size_t>(s)].array.size() &&
+                            m_history[static_cast<std::size_t>(s)].array[static_cast<std::size_t>(i)] != finalArray[static_cast<std::size_t>(i)]) {
+                            lastWrong = s;
                         }
                     }
-                    m_finalStepForIndex[i] = lastWrong;
+                    m_finalStepForIndex[static_cast<std::size_t>(i)] = lastWrong;
                 }
             }
         }
@@ -244,6 +256,7 @@ void Visualizer::sortThreadFunc()
     m_threadFinished = true;
 }
 
+// Methode explizit als const qualifiziert (Datenintegrität gewahrt)
 void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs) const {
     if (!m_audioStream || maxValue == 0 || durationMs == 0 || m_volume <= 0.01f) return;
 
@@ -261,7 +274,9 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32
         samples[i] = sample;
         phase += phaseIncrement;
     }
-    SDL_PutAudioStreamData(m_audioStream, samples.data(), static_cast<std::int32_t>(samples.size() * sizeof(float)));
+
+    // Auflösung des Smart Pointers mittels .get() für die C-Schnittstelle
+    SDL_PutAudioStreamData(m_audioStream.get(), samples.data(), static_cast<std::int32_t>(samples.size() * sizeof(float)));
 }
 
 void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b)
@@ -325,9 +340,9 @@ void Visualizer::run()
 {
     while (m_running) {
         handleEvents();
-        auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
         if (m_sorting && m_liveMode) {
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStepTime).count();
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStepTime).count();
             if (elapsed >= static_cast<std::int64_t>(m_delayMs)) {
                 m_lastStepTime = now;
                 std::lock_guard<std::mutex> lock(m_mutex);
@@ -337,8 +352,8 @@ void Visualizer::run()
                     m_array = step.array;
                     m_highlightA = step.indexA;
                     m_highlightB = step.indexB;
-                    std::int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
-                    std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[static_cast<std::size_t>(step.indexA)] : maxVal/2;
+                    const std::int32_t maxVal = m_array.empty() ? 1 : *std::ranges::max_element(m_array);
+                    const std::int32_t v = (step.indexA >= 0 && step.indexA < static_cast<std::int32_t>(m_array.size())) ? m_array[static_cast<std::size_t>(step.indexA)] : maxVal/2;
                     playBeep(v, maxVal, m_delayMs);
                 } else if (m_threadFinished) {
                     m_sorting = m_liveMode = false;

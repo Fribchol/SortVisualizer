@@ -1,4 +1,14 @@
+// ============================================================
 // terminal_main.cpp – Interaktives Konsolen-Interface
+// ============================================================
+// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
+// ┌───────────────────┬────────────────────────────────────────────────────────┐
+// │ Cache-Lokalität   │ Vektor-Allokationen erfolgen im linearen Heap-Speicher.│
+// │                   │ Sequenzielle Zugriffe verhindern CPU-Cache-Misses.      │
+// ├───────────────────┼────────────────────────────────────────────────────────┤
+// │ RAII              │ Speicherbereinigung erfolgt deterministisch beim       │
+// │                   │ Verlassen des Scopes (Stack-basierte Freigabe).        │
+// └───────────────────┴────────────────────────────────────────────────────────┘
 
 #include "SortAlgorithms.hpp"
 #include <iostream>
@@ -9,20 +19,24 @@
 #include <cstdint>
 #include <limits>
 
-void runBenchmarkFor(std::uint8_t algoIndex, std::int32_t size)
+// High-Performance Benchmark-Ausführung für einen gewählten Algorithmus
+void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size)
 {
     std::cout << "\nInitialisiere Array mit n = " << size << " Elementen (Zufallsszenario)..." << std::endl;
+
+    // Datenorientiert: Zuweisung eines zusammenhängenden Speichers im Heap via Vektor
     std::vector<std::int32_t> testArray(static_cast<std::size_t>(size));
 
-    // Konstanten Seed für Benchmark-Vergleichbarkeit gewollt -> Warnung wird unterdrückt
+    // Konstanten Seed für Benchmark-Vergleichbarkeit gewollt -> Warnung unterdrücken
+    // NOLINTNEXTLINE(cert-msc51-cpp, cppcoreguidelines-pro-type-member-init)
     std::mt19937 rng(1337);
     std::uniform_int_distribution<std::int32_t> dist(1, 1000000);
 
-    // Modernes C++20 Ranges-Verhalten angewendet
+    // Modernes C++20 Ranges-Verhalten angewendet (Cache-effizientes DOD-Befüllen)
     std::ranges::generate(testArray, [&]() { return dist(rng); });
 
     LiveMetrics metrics{};
-    auto start = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
 
     // Algorithmus anhand der Index-Tabelle ausführen
     switch (algoIndex) {
@@ -33,12 +47,15 @@ void runBenchmarkFor(std::uint8_t algoIndex, std::int32_t size)
         case 4: SortAlgorithms::radixSort(testArray, nullptr, metrics); break;
         case 5: SortAlgorithms::countingSort(testArray, nullptr, metrics); break;
         case 6: SortAlgorithms::bubbleSort(testArray, nullptr, metrics); break;
-        default: std::cout << "Ungültiger Algorithmus!" << std::endl; return;
+        default:
+            std::cout << "Ungültiger Algorithmus!" << std::endl;
+            return;
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    const auto end = std::chrono::high_resolution_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
+    // Ausgabe der Performance-Messwerte
     std::cout << "\n--- Ergebnis ---" << std::endl;
     std::cout << "Dauer:         " << duration << " ms" << std::endl;
     std::cout << "Vergleiche:    " << metrics.comparisons << std::endl;
@@ -55,11 +72,12 @@ int main()
 {
     std::int32_t arraySize = 50000;
 
-    // Endlosschleife ist für Konsolenanwendung beabsichtigt -> Warnung unterdrücken
+    // Endlosschleife ist für Konsolenanwendung beabsichtigt -> Warnung bei statischer Analyse unterdrücken
+    // NOLINTNEXTLINE(hicpp-no-assembler, google-readability-braces-around-statements)
     while (true)
     {
         std::cout << "****************************************" << std::endl;
-        std::cout << "       Konsolen Benchmark       " << std::endl;
+        std::cout << "       Konsolen Benchmark               " << std::endl;
         std::cout << "****************************************" << std::endl;
         std::cout << "Algorithmus aussuchen:" << std::endl;
         std::cout << " [0] QuickSort" << std::endl;

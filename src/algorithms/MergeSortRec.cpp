@@ -1,15 +1,21 @@
+// ============================================================
 // MergeSortRec.cpp – Top-Down MergeSort, rekursiv (Modern C++)
-// Prinzip: "Teile und Herrsche" (Divide and Conquer)
-// 1. Teile das Problem in zwei Hälften.
-// 2. Sortiere die Hälften rekursiv.
-// 3. Verschmelze (Merge) die sortierten Hälften.
-
+// ============================================================
+// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
+// ┌───────────────────┬────────────────────────────────────────────────────────┐
+// │ Cache-Lokalität   │ Zusammenhängender Vektorspeicher im Puffer, lineares   │
+// │                   │ Kopieren von Speicherblöcken zur Optimierung der L1/L2 │
+// │                   │ Cache-Zugriffe.                                        │
+// ├───────────────────┼────────────────────────────────────────────────────────┤
+// │ RAII              │ Temporärer Puffer wird als Stack/Heap-Vektor lokal     │
+// │                   │ allokiert und beim Verlassen automatisch freigegeben.  │
+// └───────────────────┴────────────────────────────────────────────────────────┘
 
 #include "MergeSortRec.hpp"
 #include <span>
 #include <vector>
 #include <cstdint>
-
+#include <algorithm> // Notwendig für std::copy
 
 namespace Algorithms
 {
@@ -29,9 +35,9 @@ namespace Algorithms
 
             // Kopiere den zu sortierenden Bereich in den temporären Puffer
             // Data Oriented Design: Lineare Speicherblöcke werden kopiert (hohe Cache-Effizienz)
-            std::ranges::copy(arr.begin() + static_cast<std::ptrdiff_t>(left),
-                              arr.begin() + static_cast<std::ptrdiff_t>(right) + 1,
-                              bufferView.begin() + static_cast<std::ptrdiff_t>(left));
+            std::copy(arr.begin() + static_cast<std::ptrdiff_t>(left),
+                      arr.begin() + static_cast<std::ptrdiff_t>(right) + 1,
+                      bufferView.begin() + static_cast<std::ptrdiff_t>(left));
             m.arrayAccesses += static_cast<std::int64_t>(length) * 2;
 
             // Initialisiere die Zeiger für die linke und rechte sortierte Hälfte
@@ -94,12 +100,12 @@ namespace Algorithms
                 ++k;
             }
         }
+
         // mergeSortRange – Rekursive Teilung über direkte Sichten (Span)
-        // Unterdrücke Clang-Tidy Rekursions- und Parameterwarnungen in akademischer Implementierung
+        // Der redundante Offset-Parameter wurde entfernt und wird relativ zur Sicht ermittelt.
         template <bool EnableVisuals>
         void mergeSortRange(std::vector<std::int32_t>& arr,
                             std::span<std::int32_t>    fullBufferView,
-                            std::size_t                absStartOffset,
                             std::span<std::int32_t>    subArrayView,
                             const StepCallback&        cb,
                             LiveMetrics&               m)
@@ -116,20 +122,16 @@ namespace Algorithms
             std::span<std::int32_t> leftSubView  = subArrayView.first(midOffset);
             std::span<std::int32_t> rightSubView = subArrayView.last(subArrayView.size() - midOffset);
 
-            // Rekursiver Abstieg auf die Teilsichten
-            // Der linke Teilbereich beginnt relativ am selben Offset wie das Elternelement.
-            mergeSortRange<EnableVisuals>(arr, fullBufferView, absStartOffset, leftSubView, cb, m);
+            // Abstieg auf die Teilsichten
+            mergeSortRange<EnableVisuals>(arr, fullBufferView, leftSubView, cb, m);
+            mergeSortRange<EnableVisuals>(arr, fullBufferView, rightSubView, cb, m);
 
-            // Der rechte Teilbereich verschiebt den absoluten Offset zur Laufzeit
-            // um die Größe des linken Teilbereichs. Die Konstante 0 im Einstieg entfällt.
-            const std::size_t rightSubViewOffset = absStartOffset + leftSubView.size();
-            mergeSortRange<EnableVisuals>(arr, fullBufferView, rightSubViewOffset, rightSubView, cb, m);
+            // Aufsteigende Verschmelzung (Conquer & Combine) über Pointer-Differenz
+            const std::size_t absStartIdx = static_cast<std::size_t>(subArrayView.data() - arr.data());
+            const std::size_t absMid      = absStartIdx + leftSubView.size() - 1;
+            const std::size_t absRight    = absStartIdx + subArrayView.size() - 1;
 
-            // Aufsteigende Verschmelzung (Conquer & Combine) über berechnete absolute Startindizes
-            const std::size_t absMid   = absStartOffset + leftSubView.size() - 1;
-            const std::size_t absRight = absStartOffset + subArrayView.size() - 1;
-
-            mergeImpl<EnableVisuals>(arr, fullBufferView, absStartOffset, absMid, absRight, cb, m);
+            mergeImpl<EnableVisuals>(arr, fullBufferView, absStartIdx, absMid, absRight, cb, m);
         }
         // NOLINTEND(readability-function-cognitive-complexity, bugprone-recursive-recursion, misc-no-recursion)
 
@@ -152,9 +154,9 @@ namespace Algorithms
 
         // NOLINTNEXTLINE(readability-static-accessed-through-instance, clang-analyzer-core.CallAndMessage)
         if (cb) {
-            mergeSortRange<true>(arr, bufferView, 0, mainView, cb, m);
+            mergeSortRange<true>(arr, bufferView, mainView, cb, m);
         } else {
-            mergeSortRange<false>(arr, bufferView, 0, mainView, cb, m);
+            mergeSortRange<false>(arr, bufferView, mainView, cb, m);
         }
     }
 

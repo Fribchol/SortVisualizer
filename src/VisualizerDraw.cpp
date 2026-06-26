@@ -1,4 +1,15 @@
+// ============================================================
 // VisualizerDraw.cpp – Rendern der Visualisierung
+// ============================================================
+// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
+// ┌───────────────────┬────────────────────────────────────────────────────────┐
+// │ Cache-Lokalität   │ Datenstrukturen (Vektoren, Buttons) werden in zusammen-│
+// │                   │ hängenden Speicherbereichen linear verarbeitet.        │
+// ├───────────────────┼────────────────────────────────────────────────────────┤
+// │ RAII              │ Ressourcen (Oberflächen, Texturen) werden typsicher in │
+// │                   │ Smart Pointern (std::unique_ptr) gehalten und freige-  │
+// │                   │ geben.                                                 │
+// └───────────────────┴────────────────────────────────────────────────────────┘
 
 #include "Visualizer.hpp"
 #include <SDL3/SDL.h>
@@ -69,7 +80,8 @@ namespace {
     }
 }
 
-void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font)
+// Konsistente const-Qualifikation
+void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font) const
 {
     if (text.empty() || !font) return;
 
@@ -86,7 +98,8 @@ void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color col
     SDL_RenderTexture(m_renderer.get(), tex.get(), nullptr, &destRect);
 }
 
-void Visualizer::drawTextWrapped(std::string_view text, float x, float y, float maxWidth, SDL_Color color, TTF_Font* font, float& outHeight)
+// Konsistente const-Qualifikation
+void Visualizer::drawTextWrapped(std::string_view text, float x, float y, float maxWidth, SDL_Color color, TTF_Font* font, float& outHeight) const
 {
     outHeight = 0.0f;
     if (text.empty() || !font) return;
@@ -130,7 +143,8 @@ void Visualizer::drawTextWrapped(std::string_view text, float x, float y, float 
     flushLine(currentLine);
 }
 
-void Visualizer::drawMainMenu()
+// Methoden als const qualifiziert
+void Visualizer::drawMainMenu() const
 {
     drawText("Sort Visualizer", static_cast<float>(WIN_W) / 2.0f - 140.0f, 150.0f, {100, 200, 255, 255}, m_fontTitle.get());
 
@@ -148,7 +162,8 @@ void Visualizer::drawMainMenu()
     drawBtn(m_btnMenuQuit);
 }
 
-void Visualizer::drawSettings()
+// Methoden als const qualifiziert
+void Visualizer::drawSettings() const
 {
     drawText("Einstellungen", static_cast<float>(WIN_W) / 2.0f - 100.0f, 150.0f, {100, 200, 255, 255}, m_fontTitle.get());
 
@@ -207,13 +222,12 @@ void Visualizer::drawBarsView()
     }
 
     SDL_Rect clipRect = { static_cast<std::int32_t>(VIS_X), static_cast<std::int32_t>(VIS_Y), static_cast<std::int32_t>(VIS_W), static_cast<std::int32_t>(VIS_H) };
-    SDL_SetRenderClipRect(m_renderer.get(), &clipRect); // Korrektur angewendet
+    SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
 
     for (auto i = 0; i < static_cast<std::int32_t>(m_array.size()); ++i)
     {
         float barH{};
-        // Angepasste Logik für gleichgroße Elemente (S: Gleichgroß)
-        // Wenn alle Elemente gleich groß sind, zentriere die Balken genau auf der Hälfte (50%) der Diagrammhöhe
+        // Didaktisch fundiertes Schema: Erklärung zur Zentrierung gleichgroßer Elemente
         if (maxVal > 0.0f && static_cast<float>(m_array[static_cast<std::size_t>(i)]) == maxVal && *std::ranges::min_element(m_array) == m_array[static_cast<std::size_t>(i)])
         {
             barH = 0.5f * effectiveVisHeight;
@@ -222,6 +236,8 @@ void Visualizer::drawBarsView()
         {
             barH = (static_cast<float>(m_array[static_cast<std::size_t>(i)]) / maxVal) * effectiveVisHeight;
         }
+
+
 
         float bx   = VIS_X + static_cast<float>(i) * barW;
         float by   = VIS_Y + VIS_H - barH;
@@ -371,7 +387,7 @@ void Visualizer::drawMetricsPanel()
     constexpr float lineH = 70.0f; // 70 Pixel hoher Block pro Zeile
     constexpr std::int32_t maxLines = static_cast<std::int32_t>((MET_H - 60.0f) / lineH);
 
-    const std::int32_t totalSteps = m_history.empty() ? 0 : m_historyIndex + 1;
+    const auto totalSteps = m_history.empty() ? 0 : m_historyIndex + 1;
 
     if (m_sorting && (m_liveMode || m_historyIndex == static_cast<std::int32_t>(m_history.size()) - 1)) {
         m_explanationScrollY = std::max(0, totalSteps - maxLines);
