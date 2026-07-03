@@ -1,15 +1,3 @@
-// ============================================================
-// main.cpp – Einstiegspunkt (GUI & CLI Dual-Mode)
-// ============================================================
-// C++20/C++23 Features & Modernisierungen:
-// ┌──────────────────────┬────────────────────────────────────────────────────────┐
-// │ Anonymer Bereich     │ namespace { } – Kapselung, vermeidet globale Verlinkung│
-// │ std::span            │ Sichere Referenzierung von C-Arrays (argv) ohne Kopien │
-// │ std::unique_ptr      │ Memory-Safety (RAII) für das Visualizer-Objekt         │
-// │ std::from_chars      │ Performantes, speichereffizientes String-Parsing       │
-// │ Strukturierte Bindung│ C++17/20-Syntax zum direkten Entpacken von Tupeln/Structs│
-// └──────────────────────┴────────────────────────────────────────────────────────┘
-
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
 #include <SDL3/SDL.h>

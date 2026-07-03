@@ -1,6 +1,3 @@
-// SortAlgorithms.hpp
-// Zentrale Typen, Structs und Dispatcher-Deklarationen
-
 #pragma once
 
 #include <cstdint>      // std::int32_t, std::uint64_t

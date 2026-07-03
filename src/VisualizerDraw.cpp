@@ -1,16 +1,3 @@
-// ============================================================
-// VisualizerDraw.cpp – Rendern der Visualisierung
-// ============================================================
-// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
-// ┌───────────────────┬────────────────────────────────────────────────────────┐
-// │ Cache-Lokalität   │ Datenstrukturen (Vektoren, Buttons) werden in zusammen-│
-// │                   │ hängenden Speicherbereichen linear verarbeitet.        │
-// ├───────────────────┼────────────────────────────────────────────────────────┤
-// │ RAII              │ Ressourcen (Oberflächen, Texturen) werden typsicher in │
-// │                   │ Smart Pointern (std::unique_ptr) gehalten und freige-  │
-// │                   │ geben.                                                 │
-// └───────────────────┴────────────────────────────────────────────────────────┘
-
 #include "Visualizer.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>

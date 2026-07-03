@@ -1,15 +1,3 @@
-// ============================================================
-// SortAlgorithms.cpp – Dispatcher + AlgoInfo Tabelle
-// ============================================================
-// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
-// ┌───────────────────┬────────────────────────────────────────────────────────┐
-// │ Cache-Lokalität   │ Direkte Vektordatenübergabe (Kontinuierlicher Speicher)│
-// │                   │ Vermeidung von Fragmentierung und Pointer-Indirektionen│
-// ├───────────────────┼────────────────────────────────────────────────────────┤
-// │ RAII              │ Automatische Speicherbereinigung und Array-Bounds      │
-// │                   │ durch Standard-Container (std::array, std::vector)     │
-// └───────────────────┴────────────────────────────────────────────────────────┘
-
 #include "SortAlgorithms.hpp"
 #include "algorithms/QuickSort.hpp"
 #include "algorithms/MergeSortRec.hpp"

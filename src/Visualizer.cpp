@@ -1,15 +1,3 @@
-// ============================================================
-// Visualizer.cpp – Konstruktor, SDL-Init, Thread-Logik
-// ============================================================
-// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
-// ┌───────────────────┬────────────────────────────────────────────────────────┐
-// │ Cache-Lokalität   │ Sequenzielle Speichernutzung, Heap-Zuweisung wird in   │
-// │                   │ lokalen Containern (std::vector, std::array) gekapselt.│
-// ├───────────────────┼────────────────────────────────────────────────────────┤
-// │ RAII              │ Speicherbereinigung erfolgt deterministisch beim       │
-// │                   │ Verlassen des Scopes (Stack-basierte Freigabe).        │
-// └───────────────────┴────────────────────────────────────────────────────────┘
-
 #include "Visualizer.hpp"
 #include "SortAlgorithms.hpp"
 #include <SDL3/SDL.h>
