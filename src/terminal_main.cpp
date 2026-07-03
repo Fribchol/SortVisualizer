@@ -1,15 +1,3 @@
-// ============================================================
-// terminal_main.cpp – Interaktives Konsolen-Interface
-// ============================================================
-// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
-// ┌───────────────────┬────────────────────────────────────────────────────────┐
-// │ Cache-Lokalität   │ Vektor-Allokationen erfolgen im linearen Heap-Speicher.│
-// │                   │ Sequenzielle Zugriffe verhindern CPU-Cache-Misses.      │
-// ├───────────────────┼────────────────────────────────────────────────────────┤
-// │ RAII              │ Speicherbereinigung erfolgt deterministisch beim       │
-// │                   │ Verlassen des Scopes (Stack-basierte Freigabe).        │
-// └───────────────────┴────────────────────────────────────────────────────────┘
-
 #include "SortAlgorithms.hpp"
 #include <iostream>
 #include <vector>
@@ -19,7 +7,7 @@
 #include <cstdint>
 #include <limits>
 
-// High-Performance Benchmark-Ausführung für einen gewählten Algorithmus
+// High-Performance Benchmark-Ausführung für einen  der gewählten Algorithmus
 void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size)
 {
     std::cout << "\nInitialisiere Array mit n = " << size << " Elementen (Zufallsszenario)..." << std::endl;

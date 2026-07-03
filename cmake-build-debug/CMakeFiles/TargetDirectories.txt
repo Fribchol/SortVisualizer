@@ -1,4 +1,4 @@
-C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug/CMakeFiles/SortVisualizer.dir
-C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug/CMakeFiles/SortBenchmark.dir
-C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/frieb/CLionProjects/ProjektC++/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/SortVisualizer.dir
+C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/SortBenchmark.dir
+C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
