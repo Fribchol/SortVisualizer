@@ -75,7 +75,7 @@ namespace {
         // Vektor fester Größe im Heap anlegen (Datenorientiertes Design)
         std::vector<std::int32_t> data(static_cast<std::size_t>(config.arraySize));
 
-        // Zufallsgenerator initialisieren (Echt-Zufall via OS Hardware Entropie).
+        // Zufallsgenerator initialisieren (Echt-Zufall via OS Hardware).
         // Das const wurde entfernt, um Kompatibilitätsprobleme mit MSVC zu beheben.
         // Clang-Tidy constexpr-Warnung wird hier bewusst unterdrückt.
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
@@ -92,7 +92,7 @@ namespace {
         LiveMetrics metrics{};
         std::cout << "Starte Sortierung...\n\n";
 
-        // Hochpräzise Zeitmessung der reinen Sortieroperation starten
+        // Präzise Zeitmessung der reinen Sortieroperation starten
         const auto start = std::chrono::high_resolution_clock::now();
 
         // Dynamisches Dispatching zum passenden Algorithmus (Schnittstellenabdeckung aller 7 Algos)

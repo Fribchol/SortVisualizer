@@ -385,7 +385,7 @@ void Visualizer::drawMetricsPanel()
     std::lock_guard<std::mutex> lock(m_mutex);
 
     constexpr float lineH = 70.0f; // 70 Pixel hoher Block pro Zeile
-    constexpr std::int32_t maxLines = static_cast<std::int32_t>((MET_H - 60.0f) / lineH);
+    constexpr auto maxLines = static_cast<std::int32_t>((MET_H - 60.0f) / lineH);
 
     const auto totalSteps = m_history.empty() ? 0 : m_historyIndex + 1;
 
