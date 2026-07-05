@@ -66,7 +66,6 @@ namespace {
         // Zufallsgenerator initialisieren (Echt-Zufall via OS Hardware).
         // Das const wurde entfernt, um Kompatibilitätsprobleme mit MSVC zu beheben.
         // Clang-Tidy constexpr-Warnung wird hier bewusst unterdrückt.
-        // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
         std::random_device rd;
         std::mt19937 rng{rd()};
         std::uniform_int_distribution<std::int32_t> dist(1, config.arraySize);

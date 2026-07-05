@@ -13,7 +13,7 @@
 #include <vector>
 #include "SortAlgorithms.hpp"
 
-// ── App Status & Spezialszenarien ────────────────────────────
+// App Status & Spezialszenarien
 enum class AppState  : std::uint8_t { MainMenu, Settings, Visualizer };
 enum class ViewMode  : std::uint8_t { Bars, Numbers };
 enum class SortCase  : std::uint8_t { Random, Sorted, Reverse, Equal };
@@ -31,7 +31,7 @@ struct Button
     bool        active{false};
 };
 
-// ── RAII Deleter für Smart Pointer ────────────────────────────
+// ── RAII Deleter für Smart Pointer
 struct SdlWindowDeleter   { void operator()(SDL_Window* w) const noexcept { SDL_DestroyWindow(w);   } };
 struct SdlRendererDeleter { void operator()(SDL_Renderer* r) const noexcept { SDL_DestroyRenderer(r); } };
 struct TtfFontDeleter     { void operator()(TTF_Font* f) const noexcept { TTF_CloseFont(f);       } };
@@ -43,7 +43,7 @@ public:
     Visualizer();
     ~Visualizer() = default; // RAII: Resourcenfreigabe erfolgt vollständig über Smart Pointer
 
-    // ── Rule of 5: Weder kopierbar noch verschiebbar ──────────
+    // Rule of 5: Weder kopierbar noch verschiebbar
     Visualizer(const Visualizer&)            = delete;
     Visualizer& operator=(const Visualizer&) = delete;
     Visualizer(Visualizer&&)                 = delete;
@@ -62,7 +62,7 @@ private:
     // Speicherbereinigung Audio-Stream über RAII / Smart Pointer gelöst
     std::unique_ptr<SDL_AudioStream, SdlAudioStreamDeleter> m_audioStream;
 
-    // ── Globale Einstellungen ─────────────────────────────────
+    // Globale Einstellungen
     AppState    m_appState  {AppState::MainMenu};
     bool        m_fullscreen{false};
     float       m_volume    {0.1f};
@@ -74,7 +74,7 @@ private:
     bool        m_isDraggingSize{false};
     SDL_FRect   m_sizeSliderBg{};
 
-    // ── Array & Zustand ───────────────────────────────────────
+    // Array & Zustand
     std::vector<std::int32_t> m_array;
     Algorithm     m_algorithm {Algorithm::QuickSort};
     ViewMode      m_viewMode  {ViewMode::Bars};
@@ -87,7 +87,7 @@ private:
     std::uint32_t m_delayMs   {10};
     bool          m_liveMode  {false};
 
-    // ── Threading & Playback ──────────────────────────────────
+    // Threading & Playback
     std::thread             m_sortThread;
     mutable std::mutex      m_mutex;
     std::atomic<bool>       m_stopRequested {false};
@@ -104,14 +104,14 @@ private:
     std::chrono::steady_clock::time_point m_sortStart;
     std::chrono::steady_clock::time_point m_lastStepTime;
 
-    // ── Scrolling Status ──────────────────────────────────────
+    // Scrolling Status
     std::int32_t m_explanationScrollY{0};
     float        m_explanationScrollX{0.0f};
     std::int32_t m_numbersScrollY{0};
     float        m_numbersScrollX{0.0f};
     bool         m_autoScrollNumbers{true};
 
-    // ── Buttons ───────────────────────────────────────────────
+    // Buttons
     Button m_btnMenuStart, m_btnMenuSettings, m_btnMenuQuit;
     Button m_btnSettingsFullscreen, m_btnSettingsBack;
 
@@ -122,7 +122,7 @@ private:
     Button m_viewBarsButton, m_viewNumsButton;
     Button m_btnBackToMenu, m_btnBenchmark;
 
-    // ── Private Methoden ──────────────────────────────────────
+    // Private Methoden
     void initSDL();
     void initButtons();
     void fillRandom();
@@ -163,5 +163,6 @@ private:
     void drawTextWrapped(std::string_view text, float x, float y, float maxWidth, SDL_Color color, TTF_Font* font, float& outHeight) const;
 
     // Statische Hilfsfunktion für Button-Kollisionen
+    // [[nodiscard]] erzwingt die Auswertung des Rückgabewerts.
     [[nodiscard]] static bool isInside(float mx, float my, const Button& btn);
 };

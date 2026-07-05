@@ -50,7 +50,7 @@ configure_file(
 # Target 2: High-Performance Konsolen-Benchmark (Terminal)
 # ========================================================
 add_executable(SortBenchmark
-        src/terminal_main.cpp
+        src/TerminalMain.cpp
         src/SortAlgorithms.cpp
         src/algorithms/QuickSort.cpp
         src/algorithms/MergeSortRec.cpp

@@ -25,7 +25,6 @@ namespace {
     using SurfacePtr = std::unique_ptr<SDL_Surface, SdlSurfaceDeleter>;
     using TexturePtr = std::unique_ptr<SDL_Texture, SdlTextureDeleter>;
 
-    // Didaktisch fundierte Erklärungen basierend auf Informatik-Skripten / Vorlesung (Lernmodus)
     std::string getStepDescription(Algorithm algo, std::int32_t valA, std::int32_t valB, std::int32_t a, std::int32_t b, bool swapped)
     {
         // Wenn kein Index aktiv ist (Ausgangslage)

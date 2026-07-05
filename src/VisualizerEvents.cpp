@@ -6,7 +6,7 @@
 #include <thread>
 
 namespace {
-    constexpr float MET_X = 1400.0f - 380.0f; // WIN_W - METRICS_W
+    constexpr float MET_X = 1400.0f - 380.0f;
 
     // Konstanten für UI-Labels
     constexpr std::string_view LABEL_FULLSCREEN_ON  = "Vollbild: AN";

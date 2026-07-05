@@ -50,7 +50,7 @@ using StepCallback = std::function<void(
 )>;
 
 namespace SortAlgorithms
-{
+{   // [[nodiscard]] erzwingt die Auswertung des Rückgabewerts.
     [[nodiscard]] AlgoInfo getInfo(std::uint8_t algorithmIndex);
     // Anpassung: Übergabe per const-Referenz für exaktes Signature-Matching
     void quickSort   (std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m);
