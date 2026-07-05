@@ -22,7 +22,7 @@ add_executable(SortVisualizer
         src/VisualizerEvents.cpp
 
         # -- Algorithmen --
-        src/algorithms/QuickSort.cpp
+        src/Algorithms/Quicksort.cpp
         src/algorithms/MergeSortRec.cpp
         src/algorithms/MergeSortIt.cpp
         src/algorithms/HeapSort.cpp
@@ -52,7 +52,7 @@ configure_file(
 add_executable(SortBenchmark
         src/TerminalMain.cpp
         src/SortAlgorithms.cpp
-        src/algorithms/QuickSort.cpp
+        src/Algorithms/Quicksort.cpp
         src/algorithms/MergeSortRec.cpp
         src/algorithms/MergeSortIt.cpp
         src/algorithms/HeapSort.cpp
