@@ -11,20 +11,20 @@ Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **S
 
 ## ✨ Features
 
-- 🎬 **Live-Animation** – Sieh zu wie der Algorithmus das Array sortiert
-- 👆 **Schritt-für-Schritt Modus** – Jeden einzelnen Schritt selbst steuern mit `>` und `<`
-- ⏪ **Vor & Zurück Navigation** – Frei durch die komplette History navigieren
-- ⏹️ **Stop** – Animation jederzeit anhalten (auch per `Space`)
-- 📊 **Balken-Ansicht** – Klassische Visualisierung mit farbigen Balken
-- 🔢 **Zahlen-Ansicht** – Zeigt die tatsächlichen Zahlen und Tausch-Pfeile
-- 📚 **Schritt-Erklärungen** – Rechtes Panel erklärt jeden Schritt auf Deutsch
-- 🖱️ **Scrollbares Panel** – Mausrad zum Scrollen durch alle vergangenen Schritte
-- 🎲 **Zufalls-Array** – Neues Array mit einem Klick generieren
-- 📏 **Array-Größe** – Von 5 bis x Elemente einstellbar
+- **Live-Animation** – Sieh zu wie der Algorithmus das Array sortiert
+- **Schritt-für-Schritt Modus** – Jeden einzelnen Schritt selbst steuern mit `>` und `<`
+- **Vor & Zurück Navigation** – Frei durch die komplette History navigieren
+- **Stop** – Animation jederzeit anhalten (auch per `Space`)
+- **Balken-Ansicht** – Klassische Visualisierung mit farbigen Balken
+- **Zahlen-Ansicht** – Zeigt die tatsächlichen Zahlen und Tausch-Pfeile
+- **Schritt-Erklärungen** – Rechtes Panel erklärt jeden Schritt auf Deutsch
+- **Scrollbares Panel** – Mausrad zum Scrollen durch alle vergangenen Schritte
+- **Zufalls-Array** – Neues Array mit einem Klick generieren
+   **Array-Größe** – Von 5 bis x Elemente einstellbar
 
 ---
 
-## 🧮 Implementierte Algorithmen
+## Implementierte Algorithmen
 
 | Algorithmus | Best Case | Avg Case | Worst Case | Speicher |
 |---|---|---|---|---|
@@ -37,7 +37,7 @@ Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **S
 
 ---
 
-## 🎮 Bedienung
+## Bedienung
 
 | Aktion | Beschreibung |
 |---|---|
@@ -53,7 +53,7 @@ Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **S
 
 ---
 
-## 🛠️ Voraussetzungen
+## Voraussetzungen
 
 - **Windows** (x64)
 - **CMake** >= 3.20
@@ -62,7 +62,7 @@ Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **S
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Repository klonen
 
@@ -105,21 +105,23 @@ Lade **DejaVuSans.ttf** herunter und lege die Datei neben `CMakeLists.txt`:
 
 ---
 
-## 🗂️ Derzeitige Projektstruktur
+## Derzeitige Projektstruktur
 
 ```
 algorithmus-visualizer/
 ├── CMakeLists.txt
-├── DejaVuSans.ttf              # Font (manuell hinzufügen)
+├── DejaVuSans.ttf             
 ├── README.md
 └── src/
-    ├── main.cpp
-    ├── SortAlgorithms.hpp/.cpp  # Typen, Dispatcher, AlgoInfo
-    ├── Visualizer.hpp           # Hauptklasse
-    ├── Visualizer.cpp           # SDL-Init, Threading, Sortierung
-    ├── VisualizerDraw.cpp       # Alle Render-Funktionen
-    ├── VisualizerEvents.cpp     # Event-Handling & Navigation
-    └── algorithms/
+    ├── Main.cpp
+    ├── SortAlgorithms.cpp
+    ├── SortAlgorithms.hpp
+    ├── TerminalMain.cpp 
+    ├── Visualizer.hpp           
+    ├── Visualizer.cpp          
+    ├── VisualizerDraw.cpp       
+    ├── VisualizerEvents.cpp     
+    └── Algorithms/
         ├── QuickSort.hpp/.cpp
         ├── MergeSortRec.hpp/.cpp
         ├── MergeSortIt.hpp/.cpp
@@ -131,7 +133,7 @@ algorithmus-visualizer/
 ---
 
 
-## 📄 Lizenz
+## Lizenz
 
 ```
 MIT License
@@ -159,7 +161,7 @@ SOFTWARE.
 
 ---
 
-## 🙏 Danksagungen
+## Danksagungen
 
 - **SDL3** – Simple DirectMedia Layer ([libsdl.org](https://www.libsdl.org/))
 - **SDL3_ttf** – TrueType Font Rendering für SDL3
