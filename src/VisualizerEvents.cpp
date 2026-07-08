@@ -7,8 +7,6 @@
 
 namespace {
     constexpr float MET_X = 1400.0f - 380.0f;
-
-    // Konstanten für UI-Labels
     constexpr std::string_view LABEL_FULLSCREEN_ON  = "Vollbild: AN";
     constexpr std::string_view LABEL_FULLSCREEN_OFF = "Vollbild: AUS";
 }
@@ -59,17 +57,11 @@ void Visualizer::handleEvents() {
             float mx, my; SDL_GetMouseState(&mx, &my);
             float lx, ly; SDL_RenderCoordinatesFromWindow(m_renderer.get(), mx, my, &lx, &ly);
 
-            // Scrollen im rechten Erklärungsfenster aktivieren, wenn Maus dort positioniert ist
             if (lx >= MET_X) {
-                if (e.wheel.y != 0) {
-                    m_explanationScrollY -= static_cast<std::int32_t>(e.wheel.y);
-                }
+                if (e.wheel.y != 0) m_explanationScrollY -= static_cast<std::int32_t>(e.wheel.y);
             } else {
-                // Linker Bereich (Zahlenansicht scrollen)
                 m_autoScrollNumbers = false;
-                if (e.wheel.y != 0) {
-                    m_numbersScrollY -= static_cast<std::int32_t>(e.wheel.y) * 3;
-                }
+                if (e.wheel.y != 0) m_numbersScrollY -= static_cast<std::int32_t>(e.wheel.y) * 3;
             }
         }
     }
@@ -128,14 +120,9 @@ void Visualizer::handleButtonClick(float mx, float my) {
         m_autoScrollNumbers = true;
         if (!m_sorting && m_historyIndex == 0 && m_history.size() <= 1) {
             startStepping();
-            for (std::int32_t i = 0; i < 50; ++i) {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (m_history.size() > 1 || m_threadFinished) break;
-            }
         }
         stepForward();
     }
-    // Auswertung der neuen Vorbelegungs-Buttons für Szenarien
     else if (!m_sorting && isInside(mx, my, m_caseRandomBtn))  fillSpecialCase(SortCase::Random);
     else if (!m_sorting && isInside(mx, my, m_caseSortedBtn))  fillSpecialCase(SortCase::Sorted);
     else if (!m_sorting && isInside(mx, my, m_caseReverseBtn)) fillSpecialCase(SortCase::Reverse);
@@ -149,9 +136,7 @@ void Visualizer::handleButtonClick(float mx, float my) {
 void Visualizer::stepForward() {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
-        m_historyIndex++;
-        const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
-        m_array = step.array; m_highlightA = step.indexA; m_highlightB = step.indexB;
+        applyHistoryStep(m_historyIndex + 1);
     } else if (m_threadFinished && m_sorting) {
         m_sorting = false; m_highlightA = -1; m_highlightB = -1;
     }
@@ -160,8 +145,14 @@ void Visualizer::stepForward() {
 void Visualizer::stepBackward() {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_historyIndex > 0) {
-        m_historyIndex--;
-        const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
-        m_array = step.array; m_highlightA = step.indexA; m_highlightB = step.indexB;
+        applyHistoryStep(m_historyIndex - 1);
     }
+}
+
+void Visualizer::applyHistoryStep(std::int32_t index) {
+    m_historyIndex = index;
+    const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
+    m_array = step.array;
+    m_highlightA = step.indexA;
+    m_highlightB = step.indexB;
 }

@@ -1,3 +1,4 @@
+C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/AlgoLib.dir
 C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/SortVisualizer.dir
 C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/SortBenchmark.dir
 C:/Users/SortVisualizer/cmake-build-debug/CMakeFiles/edit_cache.dir

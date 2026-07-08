@@ -8,67 +8,46 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_ttf REQUIRED CONFIG)
 
+# 1. Gemeinsame Algorithmen-Bibliothek erstellen
+# Damit sind alle Algos in einem Objekt gebündelt und Änderungen müssen nur hier gepflegt werden
+add_library(AlgoLib STATIC
+        src/Algorithms/QuickSort.cpp
+        src/Algorithms/MergeSortRec.cpp
+        src/Algorithms/MergeSortIt.cpp
+        src/Algorithms/HeapSort.cpp
+        src/Algorithms/RadixSort.cpp
+        src/Algorithms/CountingSort.cpp
+        src/Algorithms/BubbleSort.cpp
+        src/Algorithms/SortInfo.cpp  # HIER MUSS getInfo() drin sein!
+)
+
+target_include_directories(AlgoLib PUBLIC src)
+
 # ========================================================
-# Target 1: Der grafische SortVisualizer (mit GUI, SDL, etc.)
+# Target 1: Der grafische SortVisualizer
 # ========================================================
 add_executable(SortVisualizer
-        # -- Core & Main --
         src/main.cpp
-        src/SortAlgorithms.cpp
-
-        # -- Visualizer & UI --
         src/Visualizer.cpp
         src/VisualizerDraw.cpp
         src/VisualizerEvents.cpp
-
-        # -- Algorithmen --
-        src/Algorithms/Quicksort.cpp
-        src/algorithms/MergeSortRec.cpp
-        src/algorithms/MergeSortIt.cpp
-        src/algorithms/HeapSort.cpp
-        src/algorithms/RadixSort.cpp
-        src/algorithms/CountingSort.cpp
-        src/algorithms/BubbleSort.cpp
-        src/algorithms/BubbleSort.hpp
 )
 
-target_link_libraries(SortVisualizer PRIVATE
-        SDL3::SDL3
-        SDL3_ttf::SDL3_ttf
-)
+target_link_libraries(SortVisualizer PRIVATE AlgoLib SDL3::SDL3 SDL3_ttf::SDL3_ttf)
 
-target_include_directories(SortVisualizer PRIVATE src)
-
-# Kopiert die Schriftart automatisch in den Build-Ordner
-configure_file(
-        ${CMAKE_SOURCE_DIR}/DejaVuSans.ttf
-        ${CMAKE_BINARY_DIR}/DejaVuSans.ttf
-        COPYONLY
-)
+# Kopiert die Schriftart
+configure_file(${CMAKE_SOURCE_DIR}/DejaVuSans.ttf ${CMAKE_BINARY_DIR}/DejaVuSans.ttf COPYONLY)
 
 # ========================================================
-# Target 2: High-Performance Konsolen-Benchmark (Terminal)
+# Target 2: High-Performance Konsolen-Benchmark
 # ========================================================
-add_executable(SortBenchmark
-        src/TerminalMain.cpp
-        src/SortAlgorithms.cpp
-        src/Algorithms/Quicksort.cpp
-        src/algorithms/MergeSortRec.cpp
-        src/algorithms/MergeSortIt.cpp
-        src/algorithms/HeapSort.cpp
-        src/algorithms/RadixSort.cpp
-        src/algorithms/CountingSort.cpp
-        src/algorithms/BubbleSort.cpp
-)
+add_executable(SortBenchmark src/TerminalMain.cpp
+        src/Algorithms/SortInfo.cpp)
 
-target_include_directories(SortBenchmark PRIVATE src)
+target_link_libraries(SortBenchmark PRIVATE AlgoLib)
 
-# Setze Compiler-Optimierungen für maximale Performance im Terminal (ohne GUI-Overhead)
-# Diese greifen nur im Release-Modus, um Konflikte bei Runtime-Checks im Debug-Modus zu vermeiden
 if (MSVC)
-    # Visual Studio Compiler: Maximale Geschwindigkeit /O2 (nur bei Release)
     target_compile_options(SortBenchmark PRIVATE $<$<CONFIG:Release>:/O2;/Ob2;/fp:fast>)
 else()
-    # GCC / Clang Compiler: Höchste Optimierungsstufe -O3 (nur bei Release)
     target_compile_options(SortBenchmark PRIVATE $<$<CONFIG:Release>:-O3;-march=native>)
 endif()

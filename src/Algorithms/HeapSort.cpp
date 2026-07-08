@@ -1,10 +1,11 @@
 // HeapSort.cpp – in-place Max-Heap
 
-#include "HeapSort.hpp"
+
 #include <algorithm>
 #include <cstdint>
+#include "SortAlgorithms.hpp"
 
-namespace Algorithms
+namespace SortAlgorithms
 {
     namespace
     {
@@ -88,4 +89,4 @@ namespace Algorithms
         }
     }
 
-} // namespace Algorithms
+} // namespace SortAlgorithms

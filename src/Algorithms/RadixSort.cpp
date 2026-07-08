@@ -1,11 +1,10 @@
-// RadixSort.cpp – LSD RadixSort, Basis 10
 
-#include "RadixSort.hpp"
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include "SortAlgorithms.hpp"
 
-namespace Algorithms
+namespace SortAlgorithms
 {
     namespace
     {
@@ -71,4 +70,4 @@ namespace Algorithms
         }
     }
 
-} // namespace Algorithms
+} // namespace SortAlgorithms

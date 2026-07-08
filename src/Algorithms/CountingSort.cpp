@@ -1,21 +1,13 @@
 // ============================================================
 // CountingSort.cpp – O(n+k), stabil
-// ============================================================
-// Modern C++20/C++23 & Data-Oriented Design Richtlinien:
-// ┌───────────────────┬────────────────────────────────────────────────────────┐
-// │ Cache-Lokalität   │ Sequenzielle Speichernutzung, das Count-Array wird     │
-// │                   │ linear aufgebaut und sequenziell ausgelesen.           │
-// ├───────────────────┼────────────────────────────────────────────────────────┤
-// │ RAII              │ Vektoren werden lokal verwaltet und Speicherlecks      │
-// │                   │ durch automatische Freigabe verhindert.                │
-// └───────────────────┴────────────────────────────────────────────────────────┘
 
-#include "CountingSort.hpp"
+
 #include <cstdint>
 #include <algorithm>
 #include <iterator>
+#include "SortAlgorithms.hpp"
 
-namespace Algorithms
+namespace SortAlgorithms
 {
     namespace
     {
@@ -71,4 +63,4 @@ namespace Algorithms
         }
     }
 
-} // namespace Algorithms
+} // namespace SortAlgorithms

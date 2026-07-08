@@ -27,57 +27,26 @@ namespace {
 
     std::string getStepDescription(Algorithm algo, std::int32_t valA, std::int32_t valB, std::int32_t a, std::int32_t b, bool swapped)
     {
-        // Wenn kein Index aktiv ist (Ausgangslage)
         if (a < 0 && b < 0) return "Initialer Zustand: Das Array ist unsortiert.";
-
         switch (algo) {
-            case Algorithm::QuickSort:
-                // Wenn B ebenfalls >= 0 ist, findet ein direkter Vergleich/Tausch statt (Lomuto Partition)
-                if (b >= 0) {
-                    if (swapped) {
-                        return std::format("Quicksort\nLomuto Partition:\nElement an Index {} (Wert: {}) ist kleiner oder gleich dem Pivot-Element an Index {}.\nDie Elemente werden vertauscht, um es links einzuordnen.", a, valA, b);
-                    } else {
-                        return std::format("Quicksort\nLomuto Partition:\nPrüfe Element an Index {} (Wert: {}) gegen Pivotelement an Index {}.\nEs ist größer als das Pivot und verbleibt in der rechten Partition.", a, valA, b);
-                    }
-                }
-                return std::format("Quicksort\nPivotierung/Partitionierung:\nAktiver Index wird verarbeitet: Index {} (Wert: {}).", a, valA);
-
-            case Algorithm::MergeSortRec:
-            case Algorithm::MergeSortIt:
-                return std::format("MergeSort\nVerschmelzen (Merge / Divide & Conquer):\nZwei sortierte Teilstrukturen werden im Hilfsarray zusammengefügt.\nAktives Element an Position {}.", a);
-
-            case Algorithm::HeapSort:
-                return std::format("HeapSort\nMax-Heap Eigenschaft:\nVertausche Wurzelelement an Index {} mit dem Blatt. Aktueller Wert: {}.", a, valA);
-
-            case Algorithm::RadixSort:
-                return std::format("RadixSort\nStabile Sortierung in Buckets:\nVerteile und sortiere Schlüssel basierend auf dem Ziffernwert (von LSB zu MSB).\nDurchlauf/Index: {}.", a);
-
-            case Algorithm::CountingSort:
-                return std::format("CountingSort\nAusgabearray aufbauen:\nSetze ermittelte Zahl basierend auf Häufigkeiten an finale Position.\nAktueller Index: {}.", a);
-
-            case Algorithm::BubbleSort:
-                if (swapped)
-                    return std::format("BubbleSort\nPaarweiser Vergleich:\nVergleiche Nachbarn. Bedingung erfüllt: Werte getauscht. Größeres Element steigt nach rechts auf.");
-                return std::format("BubbleSort\nPaarweiser Vergleich:\nBenachbarte Elemente sind sortiert. Kein Tausch erforderlich.");
-
-            default:
-                return std::format("Führe Teilschritt an Position {} und {} aus.", a, b);
+            case Algorithm::QuickSort: return b >= 0 ? (swapped ? std::format("Quicksort\nLomuto Partition:\nVertausche {} mit {}.", a, b) : std::format("Quicksort\nPrüfe {} gegen Pivot {}.", a, b)) : std::format("Quicksort\nVerarbeite Index {}.", a);
+            case Algorithm::MergeSortRec: case Algorithm::MergeSortIt: return std::format("MergeSort\nZusammenfügen an Position {}.", a);
+            case Algorithm::HeapSort: return std::format("HeapSort\nVertausche an Index {}.", a);
+            case Algorithm::RadixSort: return std::format("RadixSort\nBucket-Sort an Index {}.", a);
+            case Algorithm::CountingSort: return std::format("CountingSort\nSetze Wert an Index {}.", a);
+            case Algorithm::BubbleSort: return swapped ? "BubbleSort\nTausch erfolgreich." : "BubbleSort\nKein Tausch nötig.";
+            default: return "Schritt ausgeführt.";
         }
     }
 }
 
 // Konsistente const-Qualifikation
-void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font) const
-{
+void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font) const {
     if (text.empty() || !font) return;
-
     SurfacePtr surf{ TTF_RenderText_Blended(font, std::string(text).c_str(), 0, color) };
     if (!surf) return;
-
     TexturePtr tex{ SDL_CreateTextureFromSurface(m_renderer.get(), surf.get()) };
-    surf.reset();
     if (!tex) return;
-
     float tw{}, th{};
     SDL_GetTextureSize(tex.get(), &tw, &th);
     SDL_FRect destRect{x, y, tw, th};
