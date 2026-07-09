@@ -87,6 +87,14 @@ void Visualizer::handleSettingsClick(float mx, float my) {
     }
 }
 
+// Setzt genau einen der vier Case-Buttons als aktiv (grün) und alle anderen als inaktiv.
+void Visualizer::setActiveCaseButton(Button& target) {
+    m_caseRandomBtn.active  = (&target == &m_caseRandomBtn);
+    m_caseSortedBtn.active  = (&target == &m_caseSortedBtn);
+    m_caseReverseBtn.active = (&target == &m_caseReverseBtn);
+    m_caseEqualBtn.active   = (&target == &m_caseEqualBtn);
+}
+
 void Visualizer::handleButtonClick(float mx, float my) {
     if (!m_sorting && isInside(mx, my, m_btnBackToMenu)) { m_appState = AppState::MainMenu; return; }
 
@@ -123,11 +131,26 @@ void Visualizer::handleButtonClick(float mx, float my) {
         }
         stepForward();
     }
-    else if (!m_sorting && isInside(mx, my, m_caseRandomBtn))  fillSpecialCase(SortCase::Random);
-    else if (!m_sorting && isInside(mx, my, m_caseSortedBtn))  fillSpecialCase(SortCase::Sorted);
-    else if (!m_sorting && isInside(mx, my, m_caseReverseBtn)) fillSpecialCase(SortCase::Reverse);
-    else if (!m_sorting && isInside(mx, my, m_caseEqualBtn))   fillSpecialCase(SortCase::Equal);
-    else if (!m_sorting && isInside(mx, my, m_randomButton)) fillRandom();
+    else if (!m_sorting && isInside(mx, my, m_caseRandomBtn)) {
+        m_sortCase = SortCase::Random;
+        setActiveCaseButton(m_caseRandomBtn);
+        fillSpecialCase(m_sortCase);
+    }
+    else if (!m_sorting && isInside(mx, my, m_caseSortedBtn)) {
+        m_sortCase = SortCase::Sorted;
+        setActiveCaseButton(m_caseSortedBtn);
+        fillSpecialCase(m_sortCase);
+    }
+    else if (!m_sorting && isInside(mx, my, m_caseReverseBtn)) {
+        m_sortCase = SortCase::Reverse;
+        setActiveCaseButton(m_caseReverseBtn);
+        fillSpecialCase(m_sortCase);
+    }
+    else if (!m_sorting && isInside(mx, my, m_caseEqualBtn)) {
+        m_sortCase = SortCase::Equal;
+        setActiveCaseButton(m_caseEqualBtn);
+        fillSpecialCase(m_sortCase);
+    }
     else if (isInside(mx, my, m_viewBarsButton)) { m_viewBarsButton.active = true; m_viewNumsButton.active = false; m_viewMode = ViewMode::Bars; }
     else if (isInside(mx, my, m_viewNumsButton)) { m_viewBarsButton.active = false; m_viewNumsButton.active = true; m_viewMode = ViewMode::Numbers; m_autoScrollNumbers = true; }
     else if (isInside(mx, my, m_btnBenchmark)) std::system("start cmd");

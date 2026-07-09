@@ -111,7 +111,6 @@ private:
 
     std::vector<Button> m_algoButtons;
     Button m_startButton, m_stopButton, m_cancelButton, m_stepBackButton, m_stepFwdButton;
-    Button m_randomButton;
     Button m_caseRandomBtn, m_caseSortedBtn, m_caseReverseBtn, m_caseEqualBtn;
     Button m_viewBarsButton, m_viewNumsButton;
     Button m_btnBackToMenu, m_btnBenchmark;
@@ -141,6 +140,9 @@ private:
     void handleMainMenuClick(float mx, float my);
     void handleSettingsClick(float mx, float my);
     void handleButtonClick(float mx, float my);
+
+    // Setzt genau einen der vier Case-Buttons (Zufall/Sortiert/Umgekehrt/Gleich) als aktiv (grün)
+    void setActiveCaseButton(Button& target);
 
     void draw();
     void drawMainMenu() const;

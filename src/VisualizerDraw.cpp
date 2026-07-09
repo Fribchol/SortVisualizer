@@ -409,8 +409,17 @@ void Visualizer::drawButtons()
         drawText(btn.label, btn.x + 8.0f, btn.y + 12.0f, enabled ? SDL_Color{220, 220, 220, 255} : SDL_Color{90, 90, 100, 255}, m_fontLarge.get());
     };
 
-    std::ranges::for_each(m_algoButtons, [&](const Button& b){ drawBtn(b, !m_sorting); });
-    drawBtn(m_startButton, !m_sorting);
+    std::ranges::for_each(m_algoButtons, [&](const Button& b){ drawBtn(b, !m_sorting || b.active); });
+
+    {
+        SDL_FRect r{m_startButton.x, m_startButton.y, m_startButton.w, m_startButton.h};
+        if (m_sorting) SDL_SetRenderDrawColor(m_renderer.get(), 20, 150, 80, 255);
+        else           SDL_SetRenderDrawColor(m_renderer.get(), 50, 50, 70, 255);
+        SDL_RenderFillRect(m_renderer.get(), &r);
+        SDL_SetRenderDrawColor(m_renderer.get(), 160, 160, 180, 255);
+        SDL_RenderRect(m_renderer.get(), &r);
+        drawText(m_startButton.label, m_startButton.x + 8.0f, m_startButton.y + 12.0f, {220, 220, 220, 255}, m_fontLarge.get());
+    }
 
     {
         SDL_FRect r{m_stopButton.x, m_stopButton.y, m_stopButton.w, m_stopButton.h};
@@ -428,7 +437,6 @@ void Visualizer::drawButtons()
     drawBtn(m_cancelButton, (m_sorting || m_historyIndex > 0));
     drawBtn(m_stepFwdButton, (!m_liveMode && (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1 || (!m_sorting && m_historyIndex == 0))));
     drawBtn(m_stepBackButton, (m_historyIndex > 0 && !m_liveMode));
-    drawBtn(m_randomButton, !m_sorting);
 
     drawText("Geschw.:", m_speedSliderBg.x - 75.0f, m_speedSliderBg.y + 5.0f, {200, 200, 220, 255}, m_fontSmall.get());
     drawText("Array-n:", m_sizeSliderBg.x - 65.0f, m_sizeSliderBg.y + 5.0f, {200, 200, 220, 255}, m_fontSmall.get());

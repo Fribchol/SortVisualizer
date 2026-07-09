@@ -89,7 +89,6 @@ void Visualizer::initButtons()
     m_cancelButton = {210.0f, row2Y, 90.0f, 40.0f, "Abbruch", false};
     m_stepBackButton = {310.0f, row2Y, 65.0f, 40.0f, "  < ", false};
     m_stepFwdButton = {380.0f, row2Y, 65.0f, 40.0f, "  > ", false};
-    m_randomButton = {455.0f, row2Y, 90.0f, 40.0f, "Zufall", false};
     m_caseRandomBtn = { 10.0f, row3Y, 120.0f, 35.0f, "Zufall", true };
     m_caseSortedBtn = {135.0f, row3Y, 120.0f, 35.0f, "Aufsteigend", false};
     m_caseReverseBtn = {260.0f, row3Y, 120.0f, 35.0f, "Absteigend", false};
