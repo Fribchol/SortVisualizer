@@ -31,7 +31,7 @@ void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size)
 
     std::ranges::generate(testArray, [&]() { return dist(rng); });
 
-    LiveMetrics metrics{};
+    SortAlgorithms::LiveMetrics metrics{};
     const auto start = std::chrono::high_resolution_clock::now();
 
     switch (algoIndex) {
