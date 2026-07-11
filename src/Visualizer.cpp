@@ -14,6 +14,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <thread>
+#include "AppExceptions.hpp"
 
 namespace {
     constexpr std::int32_t WIN_W     = 1400;
@@ -64,9 +65,6 @@ void Visualizer::initButtons()
 {
     constexpr float centerX = WIN_W / 2.0f - 125.0f;
 
-    // Modernes C++20: designated initializers statt positionaler Aggregat-Init.
-    // Selbstdokumentierend - man sieht am Call-Site sofort, welches Feld welchen
-    // Wert bekommt, ohne die Struct-Definition danebenzulegen.
     m_btnMenuStart    = Button{.x = centerX, .y = 300.0f, .w = 250.0f, .h = 60.0f, .label = "Visualizer Starten"};
     m_btnMenuSettings = Button{.x = centerX, .y = 400.0f, .w = 250.0f, .h = 60.0f, .label = "Einstellungen"};
     m_btnMenuQuit     = Button{.x = centerX, .y = 500.0f, .w = 250.0f, .h = 60.0f, .label = "Beenden"};
@@ -122,7 +120,7 @@ void Visualizer::fillRandom()
     m_liveMode = false; m_sorting = false;
     m_explanationScrollY = 0; m_numbersScrollY = 0; m_autoScrollNumbers = true;
     m_finalStepForIndex.clear();
-    m_history.push(m_array, -1, -1);
+    m_history.push(m_array, -1, -1, SortAlgorithms::StepKind::Init);
     m_historyIndex = 0;
     m_sortCase = SortCase::Random;
 }
@@ -156,14 +154,12 @@ void Visualizer::fillSpecialCase(SortCase sc)
     m_liveMode = false; m_sorting = false;
     m_autoScrollNumbers = true;
     m_finalStepForIndex.clear();
-    m_history.push(m_array, -1, -1);
+    m_history.push(m_array, -1, -1, SortAlgorithms::StepKind::Init);
     m_historyIndex = 0;
 }
 
 void Visualizer::joinThread()
 {
-    // RAII: jthread bringt request_stop()/join() bereits von Haus aus mit,
-    // wir müssen hier nur noch unseren eigenen Zustand zurücksetzen.
     if (m_sortThread.joinable()) {
         m_sortThread.request_stop();
         m_sortThread.join();
@@ -174,10 +170,10 @@ void Visualizer::joinThread()
 
 void Visualizer::sortThreadFunc(std::stop_token stopToken)
 {
-    auto cb = [this, &stopToken](const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b)
+    auto cb = [this, &stopToken](const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, SortAlgorithms::StepKind kind)
     {
-        onSortStep(arr, a, b);
-        if (stopToken.stop_requested()) throw std::runtime_error("__STOP__");
+        onSortStep(arr, a, b, kind);
+        if (stopToken.stop_requested()) throw UserRequestedExit{};
     };
 
     try {
@@ -205,7 +201,7 @@ void Visualizer::sortThreadFunc(std::stop_token stopToken)
             }
         }
     }
-    catch (const std::runtime_error& e) { if (std::string_view{e.what()} != "__STOP__") throw; }
+    catch (const UserRequestedExit&) { /* erwarteter, sauberer Abbruch via stop_token */ }
     catch (...) {}
     m_threadFinished = true;
 }
@@ -227,12 +223,10 @@ void Visualizer::playBeep(std::int32_t value, std::int32_t maxValue, std::uint32
     SDL_PutAudioStreamData(m_audioStream.get(), samples.data(), static_cast<std::int32_t>(samples.size() * sizeof(float)));
 }
 
-void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b)
+void Visualizer::onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, SortAlgorithms::StepKind kind)
 {
-    // Data-Oriented: push() kopiert direkt in den zusammenhängenden Puffer,
-    // kein separates Heap-Objekt pro Schritt mehr nötig.
     std::scoped_lock lock(m_mutex);
-    m_history.push(arr, a, b);
+    m_history.push(arr, a, b, kind);
 }
 
 void Visualizer::startLive()
@@ -248,16 +242,12 @@ void Visualizer::startLive()
         firstArray.assign(span.begin(), span.end());
     }
     m_history.reset(firstArray.size());
-    m_history.push(firstArray, -1, -1);
+    m_history.push(firstArray, -1, -1, SortAlgorithms::StepKind::Init);
     m_array = std::move(firstArray);
     m_historyIndex = 0;
     m_finalStepForIndex.clear();
     m_sortStart = m_lastStepTime = std::chrono::steady_clock::now();
 
-    // RAII: die Lambda-Hülle sorgt dafür, dass jthread den stop_token korrekt
-    // an sortThreadFunc(std::stop_token) durchreicht, obwohl es eine
-    // Member-Funktion ist (direktes &Visualizer::sortThreadFunc, this würde
-    // hier NICHT zuverlässig den stop_token binden).
     m_sortThread = std::jthread([this](std::stop_token st) { sortThreadFunc(st); });
 }
 
@@ -275,7 +265,7 @@ void Visualizer::startStepping()
         firstArray.assign(span.begin(), span.end());
     }
     m_history.reset(firstArray.size());
-    m_history.push(firstArray, -1, -1);
+    m_history.push(firstArray, -1, -1, SortAlgorithms::StepKind::Init);
     m_array = std::move(firstArray);
     m_historyIndex = 0;
     m_finalStepForIndex.clear();
@@ -316,7 +306,6 @@ void Visualizer::run()
                 std::int32_t stepA = -1, stepB = -1;
                 bool found = false;
 
-                // Lock-Scope minimieren: nur die Daten kopieren, die wir brauchen
                 {
                     std::scoped_lock lock(m_mutex);
                     if (m_historyIndex < static_cast<std::int32_t>(m_history.stepCount()) - 1) {

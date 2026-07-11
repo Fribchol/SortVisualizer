@@ -6,9 +6,7 @@
 #include <vector>
 #include <string_view>
 #include <random>
-#include <chrono>
 #include <format>
-
 #include <charconv>
 #include <cstdint>
 #include <span>
@@ -59,12 +57,12 @@ namespace {
 
         std::ranges::generate(data, [&]{ return dist(rng); });
 
-        auto dummyCb = [](const std::vector<std::int32_t>&, std::int32_t, std::int32_t) noexcept {};
+        auto dummyCb = [](const std::vector<std::int32_t>&, std::int32_t, std::int32_t, SortAlgorithms::StepKind) noexcept {};
 
         SortAlgorithms::LiveMetrics metrics{};
         std::cout << "Starte Sortierung...\n\n";
 
-        const auto start = std::chrono::high_resolution_clock::now();
+
 
         if (config.algoName == "quicksort") {
             SortAlgorithms::quickSort(data, dummyCb, metrics);
@@ -85,15 +83,7 @@ namespace {
             return;
         }
 
-        const auto end = std::chrono::high_resolution_clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-        std::cout << "=== ERGEBNISSE ===\n";
-        std::cout << std::format("Benötigte Zeit : {} ms\n", duration.count());
-        std::cout << std::format("Vergleiche     : {}\n", metrics.comparisons);
-        std::cout << std::format("Array-Zugriffe : {}\n", metrics.arrayAccesses);
-        std::cout << std::format("Tausch-Ops     : {}\n", metrics.swaps);
-        std::cout << "\nBenchmark abgeschlossen.\n";
     }
 
 } // namespace

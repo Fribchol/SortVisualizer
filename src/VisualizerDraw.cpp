@@ -10,11 +10,11 @@
 namespace {
     constexpr std::int32_t WIN_W     = 1400;
     constexpr std::int32_t WIN_H     = 860;
-    constexpr float        METRICS_W = 380.0f; // Breite des rechten Erklärungsfensters
+    constexpr float        METRICS_W = 380.0f;
     constexpr float        UI_H      = 170.0f;
     constexpr float        VIS_X     = 10.0f;
     constexpr float        VIS_Y     = 10.0f;
-    constexpr float        VIS_W     = static_cast<float>(WIN_W) - METRICS_W - 20.0f; // Breite des linken Diagramms
+    constexpr float        VIS_W     = static_cast<float>(WIN_W) - METRICS_W - 20.0f;
     constexpr float        VIS_H     = static_cast<float>(WIN_H) - UI_H - 20.0f;
     constexpr float        MET_X     = static_cast<float>(WIN_W) - METRICS_W;
     constexpr float        MET_H     = static_cast<float>(WIN_H) - UI_H;
@@ -25,17 +25,129 @@ namespace {
     using SurfacePtr = std::unique_ptr<SDL_Surface, SdlSurfaceDeleter>;
     using TexturePtr = std::unique_ptr<SDL_Texture, SdlTextureDeleter>;
 
-    std::string getStepDescription(Algorithm algo, std::int32_t valA, std::int32_t valB, std::int32_t a, std::int32_t b, bool swapped)
+    // ==============================================================
+    // getStepDescription – jetzt anhand von StepKind statt Raten
+    // ==============================================================
+    // Vorher wurde "was passiert gerade" aus zwei Indizes und einem
+    // "hat sich der Wert an Position a seit dem letzten Schritt
+    // geändert?"-Vergleich (valuesSwapped) rekonstruiert. Das führte
+    // u.a. dazu, dass BubbleSorts Früh-Abbruch-Schritt (a=-1, b=-1)
+    // fälschlich als "Initialer Zustand: unsortiert" beschrieben wurde,
+    // weil beide Fälle identisch aussahen.
+    //
+    // Jetzt liefert jeder Algorithmus selbst mit, welche fachliche
+    // Phase gerade läuft (siehe StepKind in SortAlgorithms.hpp), sodass
+    // die Erklärungen exakt zum jeweiligen Schritt passen und näher an
+    // der Terminologie aus dem Skript "Algorithmen und Datenstrukturen"
+    // (Prof. Dr. Rethmann) bleiben - z.B. "Partition", "Median-of-Three",
+    // "versickern", "stabiler Countingsort", "Präfixsumme".
+    //
+    // Wichtig für die Korrektheit der angezeigten Werte: einige cb()-
+    // Aufrufe erfolgen in den Algorithmen VOR einem Tausch/Schreiben
+    // (z.B. Quicksorts Compare-Schritt), andere ERST DANACH (z.B. jeder
+    // Swap/Overwrite). Bei "danach"-Schritten wird bewusst KEIN "Wert X
+    // ist größer als Y"-Vergleich mehr formuliert, weil genau diese
+    // Beziehung durch den Tausch ja bereits aufgelöst wurde - stattdessen
+    // wird nur noch beschrieben, WAS strukturell passiert ist (unabhängig
+    // vom konkreten, inzwischen überschriebenen Wert).
+    std::string getStepDescription(Algorithm algo, SortAlgorithms::StepKind kind,
+                                    std::int32_t valA, std::int32_t valB,
+                                    std::int32_t a, std::int32_t b)
     {
-        if (a < 0 && b < 0) return "Initialer Zustand: Das Array ist unsortiert.";
-        switch (algo) {
-            case Algorithm::QuickSort: return b >= 0 ? (swapped ? std::format("Quicksort\nLomuto Partition:\nVertausche {} mit {}.", a, b) : std::format("Quicksort\nPrüfe {} gegen Pivot {}.", a, b)) : std::format("Quicksort\nVerarbeite Index {}.", a);
-            case Algorithm::MergeSortRec: case Algorithm::MergeSortIt: return std::format("MergeSort\nZusammenfügen an Position {}.", a);
-            case Algorithm::HeapSort: return std::format("HeapSort\nVertausche an Index {}.", a);
-            case Algorithm::RadixSort: return std::format("RadixSort\nBucket-Sort an Index {}.", a);
-            case Algorithm::CountingSort: return std::format("CountingSort\nSetze Wert an Index {}.", a);
-            case Algorithm::BubbleSort: return swapped ? "BubbleSort\nTausch erfolgreich." : "BubbleSort\nKein Tausch nötig.";
-            default: return "Schritt ausgeführt.";
+        using SortAlgorithms::StepKind;
+
+        if (kind == StepKind::Init) {
+            return "Initialer Zustand: Das Array ist unsortiert.";
+        }
+        if (kind == StepKind::Done) {
+            return "Ein kompletter Durchlauf ohne Tausch - das Array ist bereits\n"
+                   "vollständig sortiert (Früh-Abbruch, siehe Optimierung Bubblesort).";
+        }
+
+        switch (algo)
+        {
+            case Algorithm::QuickSort:
+                switch (kind)
+                {
+                    case StepKind::PivotChosen:
+                        return std::format(
+                            "Quicksort - Median-of-Three:\n"
+                            "Der Median der drei Werte an low/mid/high wurde bestimmt und\n"
+                            "steht jetzt als Pivot ({}) an Position {}.", valB, b);
+                    case StepKind::Compare:
+                        return std::format(
+                            "Quicksort - Partition (Lomuto):\n"
+                            "Vergleiche Element {} (Position {}) mit dem Pivot {} (Position {}).",
+                            valA, a, valB, b);
+                    case StepKind::PartitionSwap:
+                        return std::format(
+                            "Quicksort - Partition:\n"
+                            "Das Element war <= Pivot und wird deshalb in die \"<= Pivot\"-\n"
+                            "Zone getauscht (Positionen {} und {}).", a, b);
+                    case StepKind::PivotPlaced:
+                        return std::format(
+                            "Quicksort - Partition abgeschlossen:\n"
+                            "Das Pivot-Element ({}) steht jetzt an seiner endgültigen,\n"
+                            "sortierten Position {}. Alles davor ist <= {}, alles danach größer.",
+                            valA, a, valA);
+                    default:
+                        return "Quicksort-Schritt.";
+                }
+
+            case Algorithm::MergeSortRec:
+            case Algorithm::MergeSortIt:
+                return std::format(
+                    "MergeSort - Merge-Schritt:\n"
+                    "Der kleinere Wert der beiden bereits sortierten Teilfolgen ({})\n"
+                    "wird an Position {} in das Ergebnis übernommen.", valA, a);
+
+            case Algorithm::HeapSort:
+                switch (kind)
+                {
+                    case StepKind::HeapifySink:
+                        return std::format(
+                            "HeapSort - Versickern:\n"
+                            "Das Element an Position {} war kleiner als eines seiner Kinder\n"
+                            "und wird mit Position {} getauscht - der Schlüssel sinkt eine\n"
+                            "Ebene tiefer im Heap.", a, b);
+                    case StepKind::HeapExtract:
+                        return std::format(
+                            "HeapSort - Extraktion:\n"
+                            "Die Wurzel (bisheriges Maximum, jetzt Wert {}) wird an ihre\n"
+                            "finale sortierte Position {} getauscht. Die neue Wurzel an\n"
+                            "Position 0 versickert im nächsten Schritt wieder.", valB, b);
+                    default:
+                        return "HeapSort-Schritt.";
+                }
+
+            case Algorithm::RadixSort:
+                return std::format(
+                    "RadixSort - LSD (Least Significant Digit):\n"
+                    "Wert {} wurde für die aktuelle Ziffernposition per stabilem\n"
+                    "Countingsort einsortiert und an Position {} zurückgeschrieben.",
+                    valA, a);
+
+            case Algorithm::CountingSort:
+                return std::format(
+                    "CountingSort:\n"
+                    "Wert {} wird anhand der zuvor per Präfixsumme berechneten\n"
+                    "Zielposition an Position {} in das sortierte Ergebnis geschrieben.",
+                    valA, a);
+
+            case Algorithm::BubbleSort:
+                if (kind == StepKind::Swap) {
+                    return std::format(
+                        "BubbleSort:\n"
+                        "Die Werte an Position {} und {} standen in falscher Reihenfolge\n"
+                        "und wurden vertauscht.", a, b);
+                }
+                return std::format(
+                    "BubbleSort:\n"
+                    "Vergleiche benachbarte Elemente an Position {} ({}) und {} ({}).",
+                    a, valA, b, valB);
+
+            default:
+                return "Schritt ausgeführt.";
         }
     }
 }
@@ -155,9 +267,6 @@ void Visualizer::drawBarsView()
 
     std::vector<bool> touched(m_array.size(), false);
 
-    // Data-Oriented Bonus: prevArr/currArr sind jetzt zwei benachbarte Zeilen
-    // im selben zusammenhängenden Puffer statt zweier unabhängig geheapter
-    // Vektoren - der Diff-Scan bleibt damit im Cache.
     if (m_historyIndex > 0 && m_historyIndex < static_cast<std::int32_t>(m_history.stepCount())) {
         for (std::int32_t s = 1; s <= m_historyIndex; ++s) {
             const auto a = m_history.indexA(static_cast<std::size_t>(s));
@@ -361,11 +470,13 @@ void Visualizer::drawMetricsPanel()
         const auto stepArray = m_history.array(static_cast<std::size_t>(s));
         const auto stepA     = m_history.indexA(static_cast<std::size_t>(s));
         const auto stepB     = m_history.indexB(static_cast<std::size_t>(s));
-        const auto prevArr   = (s > 0) ? m_history.array(static_cast<std::size_t>(s) - 1) : stepArray;
+        const auto stepKind  = m_history.kind(static_cast<std::size_t>(s));
 
+        // Keine fragile "hat sich der Wert seit dem letzten Schritt
+        // geändert?"-Heuristik mehr nötig - stepKind sagt bereits
+        // exakt, was in diesem Schritt fachlich passiert ist.
         std::int32_t valA = 0;
         std::int32_t valB = 0;
-        bool valuesSwapped = false;
 
         if (stepA >= 0 && static_cast<std::size_t>(stepA) < stepArray.size()) {
             valA = stepArray[static_cast<std::size_t>(stepA)];
@@ -374,12 +485,7 @@ void Visualizer::drawMetricsPanel()
             valB = stepArray[static_cast<std::size_t>(stepB)];
         }
 
-        if (s > 0 && stepA >= 0 && static_cast<std::size_t>(stepA) < prevArr.size()) {
-            std::int32_t prevValA = prevArr[static_cast<std::size_t>(stepA)];
-            if (prevValA != valA) valuesSwapped = true;
-        }
-
-        std::string actionDesc = getStepDescription(m_algorithm, valA, valB, stepA, stepB, valuesSwapped);
+        std::string actionDesc = getStepDescription(m_algorithm, stepKind, valA, valB, stepA, stepB);
         bool isActiveStep = (s == m_historyIndex);
 
         if (isActiveStep) {

@@ -6,103 +6,63 @@
 // ==================================================================
 // Bubblesort (optimiert: schrumpfende Grenze + Früh-Abbruch)
 // ==================================================================
-//
-// Hinweis: Bubblesort wird im begleitenden Skript "Algorithmen und
-// Datenstrukturen" nicht behandelt (dort: Selection-, Insertion-,
-// Quick-, Merge-, Heap-, Counting-, Radix- und Bucketsort). Die
-// folgende Implementierung folgt daher der Standard-Lehrbuch-Logik
-// (z.B. Cormen et al., "Introduction to Algorithms").
-//
-// Grundidee: Wiederholt benachbarte Elemente vergleichen und bei
-// Bedarf vertauschen. Nach jedem Durchlauf "blubbert" das jeweils
-// größte noch unsortierte Element ans Ende des betrachteten Bereichs
-// (daher der Name).
-//
-// Zwei Optimierungen gegenüber der naiven Variante:
-//   1. Schrumpfende Grenze ("bound"): Nach einem Durchlauf ist alles
-//      AB der Position des letzten Swaps garantiert schon endgültig
-//      einsortiert - der nächste Durchlauf muss also nicht mehr bis
-//      ans Arrayende laufen, sondern nur noch bis dorthin.
-//   2. Früh-Abbruch: Findet ein kompletter Durchlauf keinen einzigen
-//      Swap mehr, ist das Array bereits vollständig sortiert -
-//      weitere Durchläufe wären reine Zeitverschwendung.
+// Siehe Kommentar zu StepKind in SortAlgorithms.hpp: Compare markiert
+// den reinen Vergleich zweier Nachbarn, Swap den tatsächlichen Tausch,
+// Done den Früh-Abbruch (Array war schon vor Ende des Durchlaufs
+// vollständig sortiert) - vorher nicht von "Init" unterscheidbar.
 
 namespace SortAlgorithms
 {
     namespace
     {
-        // --------------------------------------------------------
-        // bubbleSortImpl – Kernlogik als Template
-        // --------------------------------------------------------
-        // In einen anonymen Namespace verschoben (Konsistenz mit den
-        // übrigen Algorithmen): reine Implementierungsdetails sollen
-        // keine externe Bindung haben.
         template <bool EnableVisuals>
         void bubbleSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {
-            std::size_t bound = arr.size(); // oberer Rand des noch unsortierten Bereichs
+            std::size_t bound = arr.size();
 
-            // Äußere Schleife läuft, solange im letzten Durchlauf noch getauscht wurde.
             while (bound > 1)
             {
-                std::size_t lastSwapIdx = 0; // Position des letzten Swaps in diesem Durchlauf
+                std::size_t lastSwapIdx = 0;
 
-                // Innere Schleife: Hier verbringt die CPU 99 % der Zeit.
                 for (std::size_t j = 0; j + 1 < bound; ++j)
                 {
                     ++m.comparisons;
-                    m.arrayAccesses += 2; // liest arr[j] und arr[j+1]
+                    m.arrayAccesses += 2;
 
                     if constexpr (EnableVisuals) {
-                        cb(arr, static_cast<std::int32_t>(j), static_cast<std::int32_t>(j + 1));
+                        cb(arr, static_cast<std::int32_t>(j), static_cast<std::int32_t>(j + 1), StepKind::Compare);
                     }
 
                     if (arr[j] > arr[j + 1])
                     {
                         std::swap(arr[j], arr[j + 1]);
                         ++m.swaps;
-                        // Einheitliche Zählweise ueber alle Algorithmen hinweg:
-                        // ein Swap zaehlt als 2 Array-Zugriffe (ein Zugriff pro
-                        // beteiligtem Element), analog zu HeapSort/QuickSort.
-                        // Vorher stand hier "+= 4" (inkl. Temp-Variable des
-                        // std::swap) - das machte Bubblesort in der
-                        // Live-Metrik-Anzeige unfair schlechter als andere
-                        // Algorithmen mit identischer Anzahl an Vertauschungen.
                         m.arrayAccesses += 2;
 
                         if constexpr (EnableVisuals) {
-                            cb(arr, static_cast<std::int32_t>(j), static_cast<std::int32_t>(j + 1));
+                            cb(arr, static_cast<std::int32_t>(j), static_cast<std::int32_t>(j + 1), StepKind::Swap);
                         }
                         lastSwapIdx = j + 1;
                     }
                 }
 
-                // Kein Swap passiert -> Array ist bereits vollständig sortiert.
                 if (lastSwapIdx == 0)
                 {
                     if constexpr (EnableVisuals) {
-                        cb(arr, -1, -1);
+                        cb(arr, -1, -1, StepKind::Done);
                     }
                     break;
                 }
 
-                // Alles ab lastSwapIdx ist garantiert schon an der richtigen Stelle,
-                // der nächste Durchlauf muss nur noch bis dorthin prüfen.
                 bound = lastSwapIdx;
             }
         }
     } // namespace
 
-    // --------------------------------------------------------
-    // bubbleSort – öffentliche Schnittstelle
-    // --------------------------------------------------------
     void bubbleSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
         if (arr.empty()) return;
 
-        // Compile-Zeit-Entscheidung wie bei den übrigen Algorithmen:
-        // Mit Callback -> Visualisierungsschritte, ohne Callback
-        // (reiner Benchmark) -> kein Laufzeit-Overhead durch if constexpr.
         if (cb) {
             bubbleSortImpl<true>(arr, cb, m);
         } else {

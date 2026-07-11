@@ -15,7 +15,6 @@
 #include <vector>
 #include "SortAlgorithms.hpp"
 
-// App Status & Spezialszenarien
 enum class AppState  : std::uint8_t { MainMenu, Settings, Visualizer };
 enum class ViewMode  : std::uint8_t { Bars, Numbers };
 enum class SortCase  : std::uint8_t { Random, Sorted, Reverse, Equal };
@@ -33,22 +32,17 @@ struct Button
     bool        active{false};
 };
 
-// ── RAII Deleter für Smart Pointer
 struct SdlWindowDeleter   { void operator()(SDL_Window* w) const noexcept { SDL_DestroyWindow(w);   } };
 struct SdlRendererDeleter { void operator()(SDL_Renderer* r) const noexcept { SDL_DestroyRenderer(r); } };
 struct TtfFontDeleter     { void operator()(TTF_Font* f) const noexcept { TTF_CloseFont(f);       } };
 struct SdlAudioStreamDeleter { void operator()(SDL_AudioStream* s) const noexcept { SDL_DestroyAudioStream(s); } };
 
 // ─────────────────────────────────────────────────────────────────────────
-// Data-Oriented Design: Statt pro Sortier-Schritt einen eigenen, unabhängig
-// geheapten std::vector<int32_t> zu halten (klassisches "Array of Structs",
-// viele kleine Allokationen, schlechte Cache-Lokalität), liegen alle
-// Array-Schnappschüsse in EINEM zusammenhängenden Puffer (row-major, feste
-// Schrittweite = stride). Die Tausch-Indizes (indexA/indexB) werden separat
-// als "Struct of Arrays" gehalten, weil sie beim Zeichnen viel häufiger und
-// unabhängig von den vollen Arrays durchsucht werden (siehe "touched"-Scans
-// in VisualizerDraw.cpp). Ein reserve() am Anfang vermeidet zusätzlich
-// tausende Re-Allokationen während einer Sortierung.
+// Data-Oriented Design: zusammenhängender Puffer für alle Array-Schnappschüsse
+// (row-major, feste stride). indexA/indexB als Struct-of-Arrays. Zusätzlich
+// jetzt m_kind: ein StepKind pro Schritt, damit das Lerntool nicht mehr aus
+// zwei Indizes raten muss, WAS im jeweiligen Schritt fachlich passiert ist
+// (siehe StepKind-Kommentar in SortAlgorithms.hpp).
 // ─────────────────────────────────────────────────────────────────────────
 class HistoryBuffer
 {
@@ -59,47 +53,50 @@ public:
         m_data.clear();
         m_indexA.clear();
         m_indexB.clear();
+        m_kind.clear();
         m_data.reserve(elementsPerStep * expectedSteps);
         m_indexA.reserve(expectedSteps);
         m_indexB.reserve(expectedSteps);
+        m_kind.reserve(expectedSteps);
     }
 
-    void push(std::span<const std::int32_t> arr, std::int32_t a, std::int32_t b)
+    void push(std::span<const std::int32_t> arr, std::int32_t a, std::int32_t b, SortAlgorithms::StepKind kind)
     {
         if (m_indexA.size() >= MAX_STEPS) return;
         m_data.insert(m_data.end(), arr.begin(), arr.end());
         m_indexA.push_back(a);
         m_indexB.push_back(b);
+        m_kind.push_back(kind);
     }
 
-    // Wirft bei Aufruf auf einem leeren Puffer bewusst nicht, sondern liefert
-    // einen leeren Span zurück - der Aufrufer prüft ohnehin stets empty()/stepCount() zuerst.
     [[nodiscard]] std::span<const std::int32_t> array(std::size_t step) const noexcept
     {
         return {m_data.data() + step * m_stride, m_stride};
     }
     [[nodiscard]] std::int32_t indexA(std::size_t step) const noexcept { return m_indexA[step]; }
     [[nodiscard]] std::int32_t indexB(std::size_t step) const noexcept { return m_indexB[step]; }
+    [[nodiscard]] SortAlgorithms::StepKind kind(std::size_t step) const noexcept { return m_kind[step]; }
 
     [[nodiscard]] std::size_t stepCount() const noexcept { return m_indexA.size(); }
     [[nodiscard]] bool        empty()     const noexcept { return m_indexA.empty(); }
 
-    // Behält nur den allerersten Schritt (z. B. beim Abbrechen einer Sortierung)
     void keepFirstOnly()
     {
         if (empty()) return;
         m_data.resize(m_stride);
         m_indexA.resize(1);
         m_indexB.resize(1);
+        m_kind.resize(1);
     }
 
 private:
     static constexpr std::size_t MAX_STEPS = 100'000;
 
-    std::vector<std::int32_t> m_data;    // alle Schritte, hintereinander (row-major)
-    std::vector<std::int32_t> m_indexA;  // ein Eintrag pro Schritt
-    std::vector<std::int32_t> m_indexB;  // ein Eintrag pro Schritt
-    std::size_t m_stride{0};             // Elemente pro Schritt == Array-Größe
+    std::vector<std::int32_t> m_data;
+    std::vector<std::int32_t> m_indexA;
+    std::vector<std::int32_t> m_indexB;
+    std::vector<SortAlgorithms::StepKind> m_kind;
+    std::size_t m_stride{0};
 };
 
 class Visualizer
@@ -107,14 +104,6 @@ class Visualizer
 public:
     Visualizer();
 
-    // RAII: kein manueller Destruktor mehr nötig! std::jthread (siehe m_sortThread
-    // weiter unten) ruft in seinem eigenen Destruktor automatisch request_stop()
-    // und join() auf. Da m_sortThread in der Deklarationsreihenfolge NACH den
-    // SDL-Handles (Fenster/Renderer/Fonts/Audio) steht, wird er beim Zerstören
-    // des Visualizer-Objekts auch VOR diesen SDL-Handles zerstört (C++ zerstört
-    // Member stets in umgekehrter Deklarationsreihenfolge). Der Sortier-Thread
-    // ist also garantiert beendet, bevor irgendeine SDL-Ressource verschwindet -
-    // exakt das Verhalten, das wir vorher manuell nachbauen mussten.
     ~Visualizer() = default;
 
     Visualizer(const Visualizer&)            = delete;
@@ -157,15 +146,10 @@ private:
     std::uint32_t m_delayMs   {10};
     bool          m_liveMode  {false};
 
-    // RAII: std::jthread statt std::thread + manuellem atomic<bool> "stopRequested".
-    // Der eingebaute std::stop_token/std::stop_source-Mechanismus übernimmt das
-    // Abbruch-Signal; das Objekt joint sich beim Zerstören von selbst.
     std::jthread             m_sortThread;
     mutable std::mutex       m_mutex;
     std::atomic<bool>        m_threadFinished{false};
 
-    // Data-Oriented: zusammenhängender Puffer statt vector<SortStep> mit
-    // tausenden Einzel-Allokationen (siehe HistoryBuffer oben).
     HistoryBuffer            m_history;
     std::int32_t             m_historyIndex{-1};
 
@@ -201,7 +185,7 @@ private:
     void joinThread();
     void sortThreadFunc(std::stop_token stopToken);
 
-    void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b);
+    void onSortStep(const std::vector<std::int32_t>& arr, std::int32_t a, std::int32_t b, SortAlgorithms::StepKind kind);
     void playBeep(std::int32_t value, std::int32_t maxValue, std::uint32_t durationMs) const;
 
     void pauseSort();
