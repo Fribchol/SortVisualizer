@@ -5,6 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Verhindert "fatal error C1041: Programmdatenbank kann nicht geöffnet werden"
+# beim parallelen Kompilieren mehrerer .cpp-Dateien mit NMake/MSVC: erzwingt
+# synchrones Schreiben in die gemeinsame .pdb-Datei.
+if (MSVC)
+    add_compile_options(/FS)
+endif()
+
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_ttf REQUIRED CONFIG)
 

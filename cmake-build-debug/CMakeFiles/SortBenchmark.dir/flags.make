@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -IC:\Users\SortVisualizer\src
 
-CXX_FLAGS = /DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -std:c++20 -MDd
+CXX_FLAGS = /DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -std:c++20 -MDd /FS
 
