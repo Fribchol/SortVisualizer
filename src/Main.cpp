@@ -104,7 +104,7 @@ int main(const int argc, char* argv[])
     {
         // Spezielle Behandlung für Programmabbruch
         if (std::string_view{e.what()} == "__STOP__") {
-            return 0; // Abbruch ist kein Fehler, beende Programm sauber
+            return 0; // Abbruch ist kein Fehler, beendet Programm sauber
         }
 
         // Fehler werden per Message Box gemeldet

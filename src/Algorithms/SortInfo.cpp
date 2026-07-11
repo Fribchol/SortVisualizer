@@ -18,8 +18,7 @@ namespace SortAlgorithms
             {"BubbleSort",      "O(n)",       "O(n^2)",     "O(n^2)",     "O(1)",     "Ja",   "Sehr langsam",       "Austausch-basiert"},
         } };
 
-        // Rückgabewert für ungültige/unbekannte Indizes - ebenfalls
-        // nur einmal angelegt statt bei jedem Fehlaufruf neu gebaut.
+        // Rückgabewert für ungültige/unbekannte Indizes
         inline const AlgoInfo kUnknownAlgorithm{"Unbekannt", "-", "-", "-", "-", "-", "-", "-"};
     }
 
