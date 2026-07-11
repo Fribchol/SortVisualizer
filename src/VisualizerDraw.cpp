@@ -1,8 +1,8 @@
 #include "Visualizer.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
 #include <format>
+#include <mutex>
 #include <ranges>
 #include <sstream>
 #include <cstdint>
@@ -40,7 +40,6 @@ namespace {
     }
 }
 
-// Konsistente const-Qualifikation
 void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color color, TTF_Font* font) const {
     if (text.empty() || !font) return;
     SurfacePtr surf{ TTF_RenderText_Blended(font, std::string(text).c_str(), 0, color) };
@@ -53,7 +52,6 @@ void Visualizer::drawText(std::string_view text, float x, float y, SDL_Color col
     SDL_RenderTexture(m_renderer.get(), tex.get(), nullptr, &destRect);
 }
 
-// Konsistente const-Qualifikation
 void Visualizer::drawTextWrapped(std::string_view text, float x, float y, float maxWidth, SDL_Color color, TTF_Font* font, float& outHeight) const
 {
     outHeight = 0.0f;
@@ -98,7 +96,6 @@ void Visualizer::drawTextWrapped(std::string_view text, float x, float y, float 
     flushLine(currentLine);
 }
 
-// Methoden als const qualifiziert
 void Visualizer::drawMainMenu() const
 {
     drawText("Sort Visualizer", static_cast<float>(WIN_W) / 2.0f - 140.0f, 150.0f, {100, 200, 255, 255}, m_fontTitle.get());
@@ -117,7 +114,6 @@ void Visualizer::drawMainMenu() const
     drawBtn(m_btnMenuQuit);
 }
 
-// Methoden als const qualifiziert
 void Visualizer::drawSettings() const
 {
     drawText("Einstellungen", static_cast<float>(WIN_W) / 2.0f - 100.0f, 150.0f, {100, 200, 255, 255}, m_fontTitle.get());
@@ -146,7 +142,7 @@ void Visualizer::drawSettings() const
 
 void Visualizer::drawBarsView()
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::scoped_lock lock(m_mutex);
     if (m_array.empty() || m_history.empty()) return;
 
     auto maxVal = static_cast<float>(*std::ranges::max_element(m_array));
@@ -154,21 +150,25 @@ void Visualizer::drawBarsView()
     constexpr float fixedTopPadding = 50.0f;
     float effectiveVisHeight = VIS_H - fixedTopPadding;
 
-    auto isFinished = (m_threadFinished && m_history.size() > 1 && m_historyIndex == static_cast<std::int32_t>(m_history.size()) - 1);
+    const auto isFinished = (m_threadFinished && m_history.stepCount() > 1 &&
+                              m_historyIndex == static_cast<std::int32_t>(m_history.stepCount()) - 1);
 
     std::vector<bool> touched(m_array.size(), false);
 
-    if (m_historyIndex > 0 && m_historyIndex < static_cast<std::int32_t>(m_history.size())) {
-        for (auto s = 1; s <= m_historyIndex; ++s) {
-            auto a = m_history[static_cast<std::size_t>(s)].indexA;
-            auto b = m_history[static_cast<std::size_t>(s)].indexB;
+    // Data-Oriented Bonus: prevArr/currArr sind jetzt zwei benachbarte Zeilen
+    // im selben zusammenhängenden Puffer statt zweier unabhängig geheapter
+    // Vektoren - der Diff-Scan bleibt damit im Cache.
+    if (m_historyIndex > 0 && m_historyIndex < static_cast<std::int32_t>(m_history.stepCount())) {
+        for (std::int32_t s = 1; s <= m_historyIndex; ++s) {
+            const auto a = m_history.indexA(static_cast<std::size_t>(s));
+            const auto b = m_history.indexB(static_cast<std::size_t>(s));
             if (a >= 0 && a < static_cast<std::int32_t>(touched.size())) touched[static_cast<std::size_t>(a)] = true;
             if (b >= 0 && b < static_cast<std::int32_t>(touched.size())) touched[static_cast<std::size_t>(b)] = true;
 
-            const auto& prevArr = m_history[static_cast<std::size_t>(s) - 1].array;
-            const auto& currArr = m_history[static_cast<std::size_t>(s)].array;
-            auto minLen = std::min(prevArr.size(), currArr.size());
-            for (auto j = 0U; j < minLen; ++j) {
+            const auto prevArr = m_history.array(static_cast<std::size_t>(s) - 1);
+            const auto currArr = m_history.array(static_cast<std::size_t>(s));
+            const auto minLen = std::min(prevArr.size(), currArr.size());
+            for (std::size_t j = 0; j < minLen; ++j) {
                 if (currArr[j] != prevArr[j] && j < touched.size()) {
                     touched[j] = true;
                 }
@@ -182,7 +182,6 @@ void Visualizer::drawBarsView()
     for (auto i = 0; i < static_cast<std::int32_t>(m_array.size()); ++i)
     {
         float barH{};
-        // Didaktisch fundiertes Schema: Erklärung zur Zentrierung gleichgroßer Elemente
         if (maxVal > 0.0f && static_cast<float>(m_array[static_cast<std::size_t>(i)]) == maxVal && *std::ranges::min_element(m_array) == m_array[static_cast<std::size_t>(i)])
         {
             barH = 0.5f * effectiveVisHeight;
@@ -191,8 +190,6 @@ void Visualizer::drawBarsView()
         {
             barH = (static_cast<float>(m_array[static_cast<std::size_t>(i)]) / maxVal) * effectiveVisHeight;
         }
-
-
 
         float bx   = VIS_X + static_cast<float>(i) * barW;
         float by   = VIS_Y + VIS_H - barH;
@@ -236,16 +233,16 @@ void Visualizer::drawNumbersView()
     std::int32_t visibleHistSize = 0;
     std::int32_t fullHistSize = 0;
     std::int32_t currentArraySize = 0;
-
     std::vector<std::int32_t> sortedTarget;
 
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::scoped_lock lock(m_mutex);
         if (m_history.empty()) return;
-        fullHistSize = static_cast<std::int32_t>(m_history.size());
+        fullHistSize = static_cast<std::int32_t>(m_history.stepCount());
         visibleHistSize = std::clamp(m_historyIndex + 1, 1, fullHistSize);
         currentArraySize = static_cast<std::int32_t>(m_array.size());
-        sortedTarget = m_history.front().array;
+        const auto first = m_history.array(0);
+        sortedTarget.assign(first.begin(), first.end());
     }
 
     std::ranges::sort(sortedTarget);
@@ -273,24 +270,33 @@ void Visualizer::drawNumbersView()
     SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
 
     std::vector<bool> touched(static_cast<std::size_t>(currentArraySize), false);
-    for (auto s = 1; s <= startIdx && s < visibleHistSize; ++s) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto a = m_history[static_cast<std::size_t>(s)].indexA;
-        auto b = m_history[static_cast<std::size_t>(s)].indexB;
+    for (std::int32_t s = 1; s <= startIdx && s < visibleHistSize; ++s) {
+        std::scoped_lock lock(m_mutex);
+        const auto a = m_history.indexA(static_cast<std::size_t>(s));
+        const auto b = m_history.indexB(static_cast<std::size_t>(s));
         if (a >= 0 && a < static_cast<std::int32_t>(touched.size())) touched[static_cast<std::size_t>(a)] = true;
         if (b >= 0 && b < static_cast<std::int32_t>(touched.size())) touched[static_cast<std::size_t>(b)] = true;
-        auto minLen = std::min(m_history[static_cast<std::size_t>(s) - 1].array.size(), m_history[static_cast<std::size_t>(s)].array.size());
-        for (auto j = 0U; j < minLen; ++j) {
-            if (m_history[static_cast<std::size_t>(s)].array[j] != m_history[static_cast<std::size_t>(s) - 1].array[j] && j < touched.size()) touched[j] = true;
+
+        const auto prev = m_history.array(static_cast<std::size_t>(s) - 1);
+        const auto curr = m_history.array(static_cast<std::size_t>(s));
+        const auto minLen = std::min(prev.size(), curr.size());
+        for (std::size_t j = 0; j < minLen; ++j) {
+            if (curr[j] != prev[j] && j < touched.size()) touched[j] = true;
         }
     }
 
-    for (auto s = startIdx; s < std::min(visibleHistSize, startIdx + maxLines); ++s)
+    for (std::int32_t s = startIdx; s < std::min(visibleHistSize, startIdx + maxLines); ++s)
     {
-        SortStep step;
-        { std::lock_guard<std::mutex> lock(m_mutex); step = m_history[static_cast<std::size_t>(s)]; }
+        std::vector<std::int32_t> array;
+        std::int32_t indexA{}, indexB{};
+        {
+            std::scoped_lock lock(m_mutex);
+            const auto span = m_history.array(static_cast<std::size_t>(s));
+            array.assign(span.begin(), span.end());
+            indexA = m_history.indexA(static_cast<std::size_t>(s));
+            indexB = m_history.indexB(static_cast<std::size_t>(s));
+        }
 
-        const auto& [array, indexA, indexB] = step;
         const float fy = VIS_Y + static_cast<float>(s - startIdx) * lineH;
         const auto  n  = static_cast<std::int32_t>(array.size());
         const bool  isCur = (s == m_historyIndex);
@@ -324,7 +330,6 @@ void Visualizer::drawNumbersView()
 
 void Visualizer::drawMetricsPanel()
 {
-    // Rechter, fester Bereich als Textfenster / Erklärungsfenster
     SDL_SetRenderDrawColor(m_renderer.get(), 18, 18, 28, 255);
     SDL_FRect bgRect{MET_X, 0.0f, METRICS_W, MET_H};
     SDL_RenderFillRect(m_renderer.get(), &bgRect);
@@ -333,18 +338,17 @@ void Visualizer::drawMetricsPanel()
     SDL_SetRenderDrawColor(m_renderer.get(), 60, 60, 90, 255);
     SDL_RenderLine(m_renderer.get(), static_cast<std::int32_t>(MET_X + 15.0f), 42, static_cast<std::int32_t>(MET_X + METRICS_W - 15.0f), 42);
 
-    // SDL3 konformes Clipping-Rechteck setzen
     SDL_Rect clipRect = { static_cast<std::int32_t>(MET_X), 45, static_cast<std::int32_t>(METRICS_W), static_cast<std::int32_t>(MET_H - 45) };
     SDL_SetRenderClipRect(m_renderer.get(), &clipRect);
 
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::scoped_lock lock(m_mutex);
 
-    constexpr float lineH = 70.0f; // 70 Pixel hoher Block pro Zeile
+    constexpr float lineH = 70.0f;
     constexpr auto maxLines = static_cast<std::int32_t>((MET_H - 60.0f) / lineH);
 
     const auto totalSteps = m_history.empty() ? 0 : m_historyIndex + 1;
 
-    if (m_sorting && (m_liveMode || m_historyIndex == static_cast<std::int32_t>(m_history.size()) - 1)) {
+    if (m_sorting && (m_liveMode || m_historyIndex == static_cast<std::int32_t>(m_history.stepCount()) - 1)) {
         m_explanationScrollY = std::max(0, totalSteps - maxLines);
     }
 
@@ -354,29 +358,28 @@ void Visualizer::drawMetricsPanel()
 
     for (std::int32_t s = m_explanationScrollY; s < totalSteps && s <= m_historyIndex && (cy - 60.0f) < (maxLines * lineH); ++s)
     {
-        const auto& step = m_history[static_cast<std::size_t>(s)];
-
-        std::vector<std::int32_t> prevArr;
-        if (s > 0) prevArr = m_history[static_cast<std::size_t>(s) - 1].array;
-        else prevArr = step.array;
+        const auto stepArray = m_history.array(static_cast<std::size_t>(s));
+        const auto stepA     = m_history.indexA(static_cast<std::size_t>(s));
+        const auto stepB     = m_history.indexB(static_cast<std::size_t>(s));
+        const auto prevArr   = (s > 0) ? m_history.array(static_cast<std::size_t>(s) - 1) : stepArray;
 
         std::int32_t valA = 0;
         std::int32_t valB = 0;
         bool valuesSwapped = false;
 
-        if (step.indexA >= 0 && static_cast<std::size_t>(step.indexA) < step.array.size()) {
-            valA = step.array[static_cast<std::size_t>(step.indexA)];
+        if (stepA >= 0 && static_cast<std::size_t>(stepA) < stepArray.size()) {
+            valA = stepArray[static_cast<std::size_t>(stepA)];
         }
-        if (step.indexB >= 0 && static_cast<std::size_t>(step.indexB) < step.array.size()) {
-            valB = step.array[static_cast<std::size_t>(step.indexB)];
+        if (stepB >= 0 && static_cast<std::size_t>(stepB) < stepArray.size()) {
+            valB = stepArray[static_cast<std::size_t>(stepB)];
         }
 
-        if (s > 0 && step.indexA >= 0 && static_cast<std::size_t>(step.indexA) < prevArr.size()) {
-            std::int32_t prevValA = prevArr[static_cast<std::size_t>(step.indexA)];
+        if (s > 0 && stepA >= 0 && static_cast<std::size_t>(stepA) < prevArr.size()) {
+            std::int32_t prevValA = prevArr[static_cast<std::size_t>(stepA)];
             if (prevValA != valA) valuesSwapped = true;
         }
 
-        std::string actionDesc = getStepDescription(m_algorithm, valA, valB, step.indexA, step.indexB, valuesSwapped);
+        std::string actionDesc = getStepDescription(m_algorithm, valA, valB, stepA, stepB, valuesSwapped);
         bool isActiveStep = (s == m_historyIndex);
 
         if (isActiveStep) {
@@ -435,7 +438,7 @@ void Visualizer::drawButtons()
     }
 
     drawBtn(m_cancelButton, (m_sorting || m_historyIndex > 0));
-    drawBtn(m_stepFwdButton, (!m_liveMode && (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1 || (!m_sorting && m_historyIndex == 0))));
+    drawBtn(m_stepFwdButton, (!m_liveMode && (m_historyIndex < static_cast<std::int32_t>(m_history.stepCount()) - 1 || (!m_sorting && m_historyIndex == 0))));
     drawBtn(m_stepBackButton, (m_historyIndex > 0 && !m_liveMode));
 
     drawText("Geschw.:", m_speedSliderBg.x - 75.0f, m_speedSliderBg.y + 5.0f, {200, 200, 220, 255}, m_fontSmall.get());

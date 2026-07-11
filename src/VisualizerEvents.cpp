@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdint>
+#include <mutex>
 #include <thread>
 
 namespace {
@@ -19,6 +20,9 @@ void Visualizer::handleEvents() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_EVENT_QUIT) {
+            // RAII: ein reines m_running = false genügt jetzt wieder - der
+            // jthread stoppt und joint sich beim Zerstören des Visualizer-
+            // Objekts von selbst (siehe Kommentar am Destruktor in Visualizer.hpp).
             m_running = false;
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -87,7 +91,6 @@ void Visualizer::handleSettingsClick(float mx, float my) {
     }
 }
 
-// Setzt genau einen der vier Case-Buttons als aktiv (grün) und alle anderen als inaktiv.
 void Visualizer::setActiveCaseButton(Button& target) {
     m_caseRandomBtn.active  = (&target == &m_caseRandomBtn);
     m_caseSortedBtn.active  = (&target == &m_caseSortedBtn);
@@ -126,7 +129,7 @@ void Visualizer::handleButtonClick(float mx, float my) {
     else if (isInside(mx, my, m_stepBackButton)) { m_autoScrollNumbers = true; stepBackward(); }
     else if (isInside(mx, my, m_stepFwdButton)) {
         m_autoScrollNumbers = true;
-        if (!m_sorting && m_historyIndex == 0 && m_history.size() <= 1) {
+        if (!m_sorting && m_historyIndex == 0 && m_history.stepCount() <= 1) {
             startStepping();
         }
         stepForward();
@@ -157,8 +160,8 @@ void Visualizer::handleButtonClick(float mx, float my) {
 }
 
 void Visualizer::stepForward() {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_historyIndex < static_cast<std::int32_t>(m_history.size()) - 1) {
+    std::scoped_lock lock(m_mutex);
+    if (m_historyIndex < static_cast<std::int32_t>(m_history.stepCount()) - 1) {
         applyHistoryStep(m_historyIndex + 1);
     } else if (m_threadFinished && m_sorting) {
         m_sorting = false; m_highlightA = -1; m_highlightB = -1;
@@ -166,7 +169,7 @@ void Visualizer::stepForward() {
 }
 
 void Visualizer::stepBackward() {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::scoped_lock lock(m_mutex);
     if (m_historyIndex > 0) {
         applyHistoryStep(m_historyIndex - 1);
     }
@@ -174,8 +177,8 @@ void Visualizer::stepBackward() {
 
 void Visualizer::applyHistoryStep(std::int32_t index) {
     m_historyIndex = index;
-    const auto& step = m_history[static_cast<std::size_t>(m_historyIndex)];
-    m_array = step.array;
-    m_highlightA = step.indexA;
-    m_highlightB = step.indexB;
+    const auto span = m_history.array(static_cast<std::size_t>(m_historyIndex));
+    m_array.assign(span.begin(), span.end());
+    m_highlightA = m_history.indexA(static_cast<std::size_t>(m_historyIndex));
+    m_highlightB = m_history.indexB(static_cast<std::size_t>(m_historyIndex));
 }

@@ -44,73 +44,79 @@
 
 namespace SortAlgorithms
 {
-    template <bool EnableVisuals>
-    void countingSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
+    namespace
     {
-        // Verwendung von std::ranges::max_element/min_element für
-        // maximale Kompatibilität (auch unter restriktiven
-        // Toolchains wie MinGW-Clang).
-        const auto maxVal = *std::ranges::max_element(arr);
-        const auto minVal = *std::ranges::min_element(arr);
-        const auto n       = static_cast<std::int32_t>(arr.size());
-
-        // Sicherer Cast der Differenz über int64_t, um Overflow zu
-        // vermeiden (int32_t-Wertebereich könnte sonst bei der
-        // Subtraktion "maxVal - minVal" knapp überlaufen).
-        const auto range = static_cast<std::size_t>(static_cast<std::int64_t>(maxVal) - minVal + 1);
-
-        // "cnt" aus dem Pseudocode: erst Häufigkeiten, später (nach
-        // der collect-Phase) Präfixsummen / Zielpositionen.
-        std::vector<std::int32_t> count(range, 0);
-
-        // "b" aus dem Pseudocode: separater Ausgabepuffer, in den
-        // rearrange schreibt. Countingsort ist NICHT in-place.
-        std::vector<std::int32_t> output(static_cast<std::size_t>(n));
-
-        // --- Phase "count": Häufigkeiten zählen ---
-        for (const auto& val : arr)
+        // In einen anonymen Namespace verschoben (Konsistenz mit den
+        // übrigen Algorithmen): countingSortImpl ist reines
+        // Implementierungsdetail und soll keine externe Bindung haben.
+        template <bool EnableVisuals>
+        void countingSortImpl(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
         {
-            const auto offset = static_cast<std::size_t>(static_cast<std::int64_t>(val) - minVal);
-            ++count[offset];
-            ++m.arrayAccesses;
-        }
+            // Verwendung von std::ranges::max_element/min_element für
+            // maximale Kompatibilität (auch unter restriktiven
+            // Toolchains wie MinGW-Clang).
+            const auto maxVal = *std::ranges::max_element(arr);
+            const auto minVal = *std::ranges::min_element(arr);
+            const auto n       = static_cast<std::int32_t>(arr.size());
 
-        // --- Phase "collect": Präfixsummen bilden ---
-        // Nach dieser Schleife gibt count[offset] an, an welcher
-        // (um 1 verschobenen) Position im Ausgabepuffer das jeweils
-        // LETZTE Element mit diesem Wert landet.
-        for (std::size_t i = 1; i < range; ++i)
-        {
-            count[i] += count[i - 1];
-            ++m.arrayAccesses;
-        }
+            // Sicherer Cast der Differenz über int64_t, um Overflow zu
+            // vermeiden (int32_t-Wertebereich könnte sonst bei der
+            // Subtraktion "maxVal - minVal" knapp überlaufen).
+            const auto range = static_cast<std::size_t>(static_cast<std::int64_t>(maxVal) - minVal + 1);
 
-        // --- Phase "rearrange": rückwärts einsortieren ---
-        // Die Rückwärtsrichtung (j von n-1 bis 0) ist - wie oben
-        // erklärt - der Grund, warum dieses Verfahren stabil ist.
-        for (auto j = n - 1; j >= 0; --j)
-        {
-            const auto val    = arr[static_cast<std::size_t>(j)];
-            const auto offset = static_cast<std::size_t>(static_cast<std::int64_t>(val) - minVal);
-            const auto pos    = --count[offset];
+            // "cnt" aus dem Pseudocode: erst Häufigkeiten, später (nach
+            // der collect-Phase) Präfixsummen / Zielpositionen.
+            std::vector<std::int32_t> count(range, 0);
 
-            output[static_cast<std::size_t>(pos)] = val;
-            m.arrayAccesses += 2; // Lesen von arr[j], Schreiben nach output[pos]
-        }
+            // "b" aus dem Pseudocode: separater Ausgabepuffer, in den
+            // rearrange schreibt. Countingsort ist NICHT in-place.
+            std::vector<std::int32_t> output(static_cast<std::size_t>(n));
 
-        // Ergebnis zurück nach "arr" kopieren, damit das Interface
-        // ("arr wird in-place sortiert") für den Aufrufer gleich
-        // bleibt wie bei den anderen Sortierverfahren.
-        for (auto idx = 0; idx < n; ++idx)
-        {
-            arr[static_cast<std::size_t>(idx)] = output[static_cast<std::size_t>(idx)];
-            ++m.arrayAccesses;
+            // --- Phase "count": Häufigkeiten zählen ---
+            for (const auto& val : arr)
+            {
+                const auto offset = static_cast<std::size_t>(static_cast<std::int64_t>(val) - minVal);
+                ++count[offset];
+                ++m.arrayAccesses;
+            }
 
-            if constexpr (EnableVisuals) {
-                cb(arr, idx, -1);
+            // --- Phase "collect": Präfixsummen bilden ---
+            // Nach dieser Schleife gibt count[offset] an, an welcher
+            // (um 1 verschobenen) Position im Ausgabepuffer das jeweils
+            // LETZTE Element mit diesem Wert landet.
+            for (std::size_t i = 1; i < range; ++i)
+            {
+                count[i] += count[i - 1];
+                ++m.arrayAccesses;
+            }
+
+            // --- Phase "rearrange": rückwärts einsortieren ---
+            // Die Rückwärtsrichtung (j von n-1 bis 0) ist - wie oben
+            // erklärt - der Grund, warum dieses Verfahren stabil ist.
+            for (auto j = n - 1; j >= 0; --j)
+            {
+                const auto val    = arr[static_cast<std::size_t>(j)];
+                const auto offset = static_cast<std::size_t>(static_cast<std::int64_t>(val) - minVal);
+                const auto pos    = --count[offset];
+
+                output[static_cast<std::size_t>(pos)] = val;
+                m.arrayAccesses += 2; // Lesen von arr[j], Schreiben nach output[pos]
+            }
+
+            // Ergebnis zurück nach "arr" kopieren, damit das Interface
+            // ("arr wird in-place sortiert") für den Aufrufer gleich
+            // bleibt wie bei den anderen Sortierverfahren.
+            for (auto idx = 0; idx < n; ++idx)
+            {
+                arr[static_cast<std::size_t>(idx)] = output[static_cast<std::size_t>(idx)];
+                ++m.arrayAccesses;
+
+                if constexpr (EnableVisuals) {
+                    cb(arr, idx, -1);
+                }
             }
         }
-    }
+    } // namespace
 
     void countingSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
