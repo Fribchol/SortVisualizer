@@ -161,18 +161,3 @@ SOFTWARE.
 ```
 
 ---
-
-## Danksagungen
-
-- **SDL3** – Simple DirectMedia Layer ([libsdl.org](https://www.libsdl.org/))
-- **SDL3_ttf** – TrueType Font Rendering für SDL3
-- **DejaVu Fonts** – Freie Open-Source Schriftart ([dejavu-fonts.github.io](https://dejavu-fonts.github.io/))
-- **vcpkg** – C++ Paketmanager von Microsoft ([github.com/microsoft/vcpkg](https://github.com/microsoft/vcpkg))
-
----
-
-<div align="center">
-  <strong>⭐ Wenn dir das Projekt gefällt, gib ihm einen Stern! ⭐</strong>
-  <br><br>
-  Made with ❤️ and C++20
-</div>
