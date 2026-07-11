@@ -6,8 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Verhindert "fatal error C1041: Programmdatenbank kann nicht geöffnet werden"
-# beim parallelen Kompilieren mehrerer .cpp-Dateien mit NMake/MSVC: erzwingt
-# synchrones Schreiben in die gemeinsame .pdb-Datei.
 if (MSVC)
     add_compile_options(/FS)
 endif()
@@ -15,8 +13,7 @@ endif()
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_ttf REQUIRED CONFIG)
 
-# 1. Gemeinsame Algorithmen-Bibliothek erstellen
-# Damit sind alle Algos in einem Objekt gebündelt und Änderungen müssen nur hier gepflegt werden
+# Hier sind alle Algos in einem Objekt gebündelt und Änderungen müssen nur hier gepflegt werden
 add_library(AlgoLib STATIC
         src/Algorithms/QuickSort.cpp
         src/Algorithms/MergeSortRec.cpp
@@ -30,7 +27,6 @@ add_library(AlgoLib STATIC
 
 target_include_directories(AlgoLib PUBLIC src)
 
-# Target 1: Der grafische SortVisualizer
 add_executable(SortVisualizer
         src/main.cpp
         src/Visualizer.cpp
@@ -42,7 +38,6 @@ target_link_libraries(SortVisualizer PRIVATE AlgoLib SDL3::SDL3 SDL3_ttf::SDL3_t
 
 configure_file(${CMAKE_SOURCE_DIR}/DejaVuSans.ttf ${CMAKE_BINARY_DIR}/DejaVuSans.ttf COPYONLY)
 
-# Target 2: High-Performance Konsolen-Benchmark
 add_executable(SortBenchmark src/TerminalMain.cpp
         src/Algorithms/SortInfo.cpp)
 
