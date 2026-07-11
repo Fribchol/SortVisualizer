@@ -3,12 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-// ==================================================================
-// MergeSort (rekursiv, Top-Down) mit wiederverwendetem Hilfspuffer
-// ==================================================================
-// Gleicher Merge-Schritt wie in MergeSortIt.cpp (Folie 232),
-// entsprechend dieselbe StepKind::Overwrite-Kennzeichnung.
-
 namespace SortAlgorithms
 {
     namespace
@@ -87,7 +81,7 @@ namespace SortAlgorithms
 
             mergeImpl<EnableVisuals>(arr, buffer, low, mid, high, cb, m);
         }
-    } // namespace
+    }
 
     void mergeSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -101,4 +95,4 @@ namespace SortAlgorithms
         else    mergeSortRange<false>(arr, buffer, low, high, cb, m);
     }
 
-} // namespace SortAlgorithms
+}

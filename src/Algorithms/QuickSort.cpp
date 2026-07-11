@@ -3,22 +3,6 @@
 #include <utility>
 #include "SortAlgorithms.hpp"
 
-// ==================================================================
-// QuickSort (Lomuto-Partitionierung mit Median-of-Three-Pivotwahl)
-// ==================================================================
-// Vier fachlich unterschiedliche Schritt-Arten (siehe StepKind in
-// SortAlgorithms.hpp), die vorher alle nur als "zwei Indizes plus
-// Rate-Heuristik ob getauscht wurde" bei der Visualisierung ankamen:
-//   - PivotChosen:    Median-of-Three hat den Pivot bestimmt (Folie 198:
-//                      "wähle Pivot-Element").
-//   - Compare:        Ein Element wird im Partition-Scan gegen den
-//                      Pivot geprüft (Skript-Partition-Funktion,
-//                      Folie 200, hier als Lomuto-Variante).
-//   - PartitionSwap:  Ein Element <= Pivot wird in die linke Zone
-//                      getauscht.
-//   - PivotPlaced:    Der Pivot erreicht seine endgültige, sortierte
-//                      Position (Ende der Partition-Phase).
-
 namespace SortAlgorithms
 {
     namespace
@@ -132,7 +116,7 @@ namespace SortAlgorithms
                 quickSortRec<EnableVisuals>(arr, pivotIndex + 1, high, cb, m);
             }
         }
-    } // namespace
+    }
 
     void quickSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -148,4 +132,4 @@ namespace SortAlgorithms
         }
     }
 
-} // namespace SortAlgorithms
+}

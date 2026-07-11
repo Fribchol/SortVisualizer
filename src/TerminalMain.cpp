@@ -10,7 +10,7 @@
 // Alias-Namespace für sauberere IO-Operationen
 namespace IO
 {
-    // Wir referenzieren die std:: Objekte direkt
+    // Referenzierung der std:: Objekte direkt
     auto& in  = std::cin;
     auto& out = std::cout;
 
@@ -68,6 +68,7 @@ int main()
 
     while (true)
     {
+        // Konsolen Ausgaben
         IO::out << "****************************************\n"
                 << "       Konsolen Benchmark               \n"
                 << "****************************************\n"

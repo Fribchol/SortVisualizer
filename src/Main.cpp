@@ -10,9 +10,8 @@
 #include <charconv>
 #include <cstdint>
 #include <span>
-#include <memory> // Für std::make_unique
+#include <memory>
 
-// Anonymer Namespace, um Symbole/Funktionen vor externen Modulen zu verbergen
 namespace {
 
     using ArgsSpan = std::span<char*>;
@@ -86,7 +85,7 @@ namespace {
 
     }
 
-} // namespace
+}
 
 int main(const int argc, char* argv[])
 {
@@ -103,12 +102,12 @@ int main(const int argc, char* argv[])
     }
     catch (const std::runtime_error& e)
     {
-        // Spezielle Behandlung für unseren gewollten Programmabbruch
+        // Spezielle Behandlung für Programmabbruch
         if (std::string_view{e.what()} == "__STOP__") {
             return 0; // Abbruch ist kein Fehler, beende Programm sauber
         }
 
-        // Echte Fehler werden weiterhin per Message Box gemeldet
+        // Fehler werden per Message Box gemeldet
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Kritischer Fehler", e.what(), nullptr);
         return 1;
     }

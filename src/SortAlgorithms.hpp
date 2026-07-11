@@ -13,7 +13,7 @@ struct SortStep {
 
 namespace SortAlgorithms
 {
-    // AlgoInfo jetzt INNERHALB des Namespaces
+    // AlgoInfo Innerhalb des Namespaces
     struct AlgoInfo {
         std::string name;
         std::string bestCase;
@@ -25,7 +25,7 @@ namespace SortAlgorithms
         std::string communication;
     };
 
-    // LiveMetrics jetzt INNERHALB des Namespaces
+    // LiveMetrics innerhalb des Namespaces
     struct LiveMetrics {
         std::uint64_t comparisons   {0};
         std::uint64_t swaps         {0};
@@ -33,22 +33,6 @@ namespace SortAlgorithms
         double        elapsedMs     {0.0};
     };
 
-    // ==============================================================
-    // StepKind – semantische Einordnung eines Visualisierungsschritts
-    // ==============================================================
-    // Vorher gab getStepDescription() (VisualizerDraw.cpp) nur anhand
-    // von zwei Indizes und einem "hat sich der Wert an Position a seit
-    // dem letzten Schritt geändert?"-Vergleich zurück, WAS gerade
-    // passiert. Das ist fehleranfällig: zwei völlig verschiedene
-    // Schritte (z.B. "Array ist initial unsortiert" und "BubbleSort hat
-    // frühzeitig erkannt, dass nichts mehr zu tun ist") sehen beide wie
-    // "a=-1, b=-1" aus und waren dadurch nicht unterscheidbar - das
-    // Lerntool erklärte in diesem Fall tatsächlich den falschen Schritt.
-    //
-    // Diese Enum wird jetzt direkt vom jeweiligen Sortieralgorithmus
-    // mitgeschickt, der als einziger wirklich weiß, welche Phase gerade
-    // läuft (Pivot-Wahl, reiner Vergleich, Partitions-Tausch, Versickern
-    // im Heap, ...). Die Visualisierung muss dadurch nichts mehr raten.
     enum class StepKind : std::uint8_t
     {
         Init,          // Anfangszustand (unsortiertes Array)

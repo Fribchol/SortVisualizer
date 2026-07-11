@@ -3,14 +3,6 @@
 #include <utility>
 #include <vector>
 
-// ==================================================================
-// Bubblesort (optimiert: schrumpfende Grenze + Früh-Abbruch)
-// ==================================================================
-// Siehe Kommentar zu StepKind in SortAlgorithms.hpp: Compare markiert
-// den reinen Vergleich zweier Nachbarn, Swap den tatsächlichen Tausch,
-// Done den Früh-Abbruch (Array war schon vor Ende des Durchlaufs
-// vollständig sortiert) - vorher nicht von "Init" unterscheidbar.
-
 namespace SortAlgorithms
 {
     namespace
@@ -57,7 +49,7 @@ namespace SortAlgorithms
                 bound = lastSwapIdx;
             }
         }
-    } // namespace
+    }
 
     void bubbleSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -70,4 +62,4 @@ namespace SortAlgorithms
         }
     }
 
-} // namespace SortAlgorithms
+}

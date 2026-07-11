@@ -3,14 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-// ==================================================================
-// CountingSort.cpp – O(n+k), stabil
-// ==================================================================
-// Der einzige visualisierte Schritt ist die "rearrange"-Phase (Folie
-// 265-279 im Skript): ein Wert wird anhand der vorher per Präfixsumme
-// berechneten Zielposition in das Ergebnis-Array geschrieben ->
-// StepKind::Overwrite.
-
 namespace SortAlgorithms
 {
     namespace
@@ -60,7 +52,7 @@ namespace SortAlgorithms
                 }
             }
         }
-    } // namespace
+    }
 
     void countingSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -73,4 +65,4 @@ namespace SortAlgorithms
         }
     }
 
-} // namespace SortAlgorithms
+}

@@ -689,6 +689,7 @@ CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: "C:\Program Files\Microsof
 CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\__msvc_int128.hpp"
 CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\ranges"
 CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\__msvc_ranges_to.hpp"
+CMakeFiles\SortVisualizer.dir\src\Visualizer.cpp.obj: C:\Users\SortVisualizer\src\AppExceptions.hpp
 
 
 CMakeFiles\SortVisualizer.dir\src\VisualizerDraw.cpp.obj: C:\Users\SortVisualizer\src\VisualizerDraw.cpp
@@ -1860,5 +1861,7 @@ C:\Users\SortVisualizer\src\Visualizer.cpp:
 "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\numbers":
 
 "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\ranges":
+
+C:\Users\SortVisualizer\src\AppExceptions.hpp:
 
 C:\Users\SortVisualizer\src\VisualizerDraw.cpp:

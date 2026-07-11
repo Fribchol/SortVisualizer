@@ -20,9 +20,6 @@ void Visualizer::handleEvents() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_EVENT_QUIT) {
-            // RAII: ein reines m_running = false genügt jetzt wieder - der
-            // jthread stoppt und joint sich beim Zerstören des Visualizer-
-            // Objekts von selbst (siehe Kommentar am Destruktor in Visualizer.hpp).
             m_running = false;
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {

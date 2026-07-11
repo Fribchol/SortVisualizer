@@ -1,25 +1,8 @@
-// HeapSort.cpp – in-place Max-Heap
-
 #include "SortAlgorithms.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <utility>
 #include <vector>
-
-// ==================================================================
-// Heapsort (in-place, Max-Heap)
-// ==================================================================
-// Zwei unterschiedliche Tausch-Arten, jetzt auch semantisch getrennt
-// (siehe StepKind in SortAlgorithms.hpp):
-//   - HeapifySink:   "Versickern" (Folie 240 im Skript) - ein Element
-//                     wird mit seinem größeren Kind getauscht, bis die
-//                     Heap-Eigenschaft wiederhergestellt ist.
-//   - HeapExtract:   Wurzel (Maximum) wird mit dem letzten Element des
-//                     aktiven Heap-Bereichs getauscht (Folie 241) -
-//                     das ist die eigentliche "Sortier"-Aktion, bei
-//                     der ein Wert seine endgültige Position erhält.
-// Beide sahen für die Visualisierung vorher identisch aus (nur zwei
-// vertauschte Indizes); jetzt lässt sich das im Lerntext klar trennen.
 
 namespace SortAlgorithms
 {
@@ -94,7 +77,7 @@ namespace SortAlgorithms
                 heapify<EnableVisuals>(arr, i, 0, cb, m);
             }
         }
-    } // namespace
+    }
 
     void heapSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -107,4 +90,4 @@ namespace SortAlgorithms
         }
     }
 
-} // namespace SortAlgorithms
+}

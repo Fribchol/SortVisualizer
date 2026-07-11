@@ -37,13 +37,6 @@ struct SdlRendererDeleter { void operator()(SDL_Renderer* r) const noexcept { SD
 struct TtfFontDeleter     { void operator()(TTF_Font* f) const noexcept { TTF_CloseFont(f);       } };
 struct SdlAudioStreamDeleter { void operator()(SDL_AudioStream* s) const noexcept { SDL_DestroyAudioStream(s); } };
 
-// ─────────────────────────────────────────────────────────────────────────
-// Data-Oriented Design: zusammenhängender Puffer für alle Array-Schnappschüsse
-// (row-major, feste stride). indexA/indexB als Struct-of-Arrays. Zusätzlich
-// jetzt m_kind: ein StepKind pro Schritt, damit das Lerntool nicht mehr aus
-// zwei Indizes raten muss, WAS im jeweiligen Schritt fachlich passiert ist
-// (siehe StepKind-Kommentar in SortAlgorithms.hpp).
-// ─────────────────────────────────────────────────────────────────────────
 class HistoryBuffer
 {
 public:

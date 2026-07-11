@@ -5,12 +5,6 @@
 #include <stdexcept>
 #include <vector>
 
-// ==================================================================
-// Radixsort (LSD, Least Significant Digit first), Basis 10
-// ==================================================================
-// Die "copy back"-Phase pro Ziffernposition (Folie 283 im Skript)
-// ist wie bei Countingsort ein Schreiben in das Array -> Overwrite.
-
 namespace SortAlgorithms
 {
     namespace
@@ -63,7 +57,7 @@ namespace SortAlgorithms
                 }
             }
         }
-    } // namespace
+    }
 
     void radixSort(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -76,4 +70,4 @@ namespace SortAlgorithms
         }
     }
 
-} // namespace SortAlgorithms
+}

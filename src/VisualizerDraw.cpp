@@ -25,31 +25,6 @@ namespace {
     using SurfacePtr = std::unique_ptr<SDL_Surface, SdlSurfaceDeleter>;
     using TexturePtr = std::unique_ptr<SDL_Texture, SdlTextureDeleter>;
 
-    // ==============================================================
-    // getStepDescription – jetzt anhand von StepKind statt Raten
-    // ==============================================================
-    // Vorher wurde "was passiert gerade" aus zwei Indizes und einem
-    // "hat sich der Wert an Position a seit dem letzten Schritt
-    // geändert?"-Vergleich (valuesSwapped) rekonstruiert. Das führte
-    // u.a. dazu, dass BubbleSorts Früh-Abbruch-Schritt (a=-1, b=-1)
-    // fälschlich als "Initialer Zustand: unsortiert" beschrieben wurde,
-    // weil beide Fälle identisch aussahen.
-    //
-    // Jetzt liefert jeder Algorithmus selbst mit, welche fachliche
-    // Phase gerade läuft (siehe StepKind in SortAlgorithms.hpp), sodass
-    // die Erklärungen exakt zum jeweiligen Schritt passen und näher an
-    // der Terminologie aus dem Skript "Algorithmen und Datenstrukturen"
-    // (Prof. Dr. Rethmann) bleiben - z.B. "Partition", "Median-of-Three",
-    // "versickern", "stabiler Countingsort", "Präfixsumme".
-    //
-    // Wichtig für die Korrektheit der angezeigten Werte: einige cb()-
-    // Aufrufe erfolgen in den Algorithmen VOR einem Tausch/Schreiben
-    // (z.B. Quicksorts Compare-Schritt), andere ERST DANACH (z.B. jeder
-    // Swap/Overwrite). Bei "danach"-Schritten wird bewusst KEIN "Wert X
-    // ist größer als Y"-Vergleich mehr formuliert, weil genau diese
-    // Beziehung durch den Tausch ja bereits aufgelöst wurde - stattdessen
-    // wird nur noch beschrieben, WAS strukturell passiert ist (unabhängig
-    // vom konkreten, inzwischen überschriebenen Wert).
     std::string getStepDescription(Algorithm algo, SortAlgorithms::StepKind kind,
                                     std::int32_t valA, std::int32_t valB,
                                     std::int32_t a, std::int32_t b)

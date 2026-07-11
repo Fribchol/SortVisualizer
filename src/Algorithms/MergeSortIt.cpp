@@ -3,14 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-// ==================================================================
-// MergeSort (iterativ, Bottom-Up) mit wiederverwendetem Hilfspuffer
-// ==================================================================
-// Der Merge-Schritt selbst (Folie 232 im Skript) übernimmt bei jeder
-// Zielposition den kleineren Wert einer der beiden sortierten
-// Teilfolgen - dafür steht jetzt StepKind::Overwrite (ein Wert wird
-// geschrieben, kein "Tausch" im klassischen Sinn).
-
 namespace SortAlgorithms
 {
     namespace
@@ -72,7 +64,7 @@ namespace SortAlgorithms
                 }
             }
         }
-    } // namespace
+    }
 
     void mergeSortIt(std::vector<std::int32_t>& arr, const StepCallback& cb, LiveMetrics& m)
     {
@@ -85,4 +77,4 @@ namespace SortAlgorithms
         }
     }
 
-} // namespace SortAlgorithms
+}
