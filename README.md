@@ -120,7 +120,8 @@ algorithmus-visualizer/
     ├── Visualizer.hpp           
     ├── Visualizer.cpp          
     ├── VisualizerDraw.cpp       
-    ├── VisualizerEvents.cpp     
+    ├── VisualizerEvents.cpp
+    ├── AddExceptions.hpp     
     └── Algorithms/
         ├── QuickSort.hpp/.cpp
         ├── MergeSortRec.hpp/.cpp
