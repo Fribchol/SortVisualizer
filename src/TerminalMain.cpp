@@ -3,33 +3,85 @@
 #include <vector>
 #include <random>
 #include <algorithm>
+#include <numeric>
 #include <chrono>
 #include <cstdint>
 #include <limits>
+#include <array>
+#include <string_view>
 
 // Alias-Namespace für sauberere IO-Operationen
 namespace IO
 {
-    // Referenzierung der std:: Objekte direkt
     auto& in  = std::cin;
     auto& out = std::cout;
 
-    // Hilfsfunktion zum Leeren des Buffers (DOD/Clean Code Prinzip)
     void clearBuffer() {
         in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 }
 
-void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size)
+// Szenario-Typ für die Array-Generierung (DOD: reiner Datenzustand, keine Logik gekoppelt)
+enum class ArrayScenario : std::uint8_t
 {
-    IO::out << "\nInitialisiere Array mit n = " << size << " Elementen (Zufallsszenario)...\n";
+    Random = 0,
+    Sorted,
+    Reversed,
+    Equal
+};
 
-    std::vector<std::int32_t> testArray(static_cast<std::size_t>(size));
+[[nodiscard]] constexpr std::string_view scenarioName(const ArrayScenario scenario) noexcept
+{
+    switch (scenario) {
+        case ArrayScenario::Random:   return "Zufaellig";
+        case ArrayScenario::Sorted:   return "Sortiert";
+        case ArrayScenario::Reversed: return "Umgekehrt sortiert";
+        case ArrayScenario::Equal:    return "Gleichgross";
+        default:                      return "Unbekannt";
+    }
+}
 
-    std::mt19937 rng(1337);
-    std::uniform_int_distribution<std::int32_t> dist(1, 1000000);
+// Erzeugt das Test-Array passend zum gewaehlten Szenario
+[[nodiscard]] std::vector<std::int32_t> generateArray(const std::int32_t size, const ArrayScenario scenario)
+{
+    std::vector<std::int32_t> data(static_cast<std::size_t>(size));
 
-    std::ranges::generate(testArray, [&]() { return dist(rng); });
+    switch (scenario)
+    {
+        case ArrayScenario::Random:
+        {
+            std::mt19937 rng(1337);
+            std::uniform_int_distribution<std::int32_t> dist(1, 1000000);
+            std::ranges::generate(data, [&]() { return dist(rng); });
+            break;
+        }
+        case ArrayScenario::Sorted:
+        {
+            std::iota(data.begin(), data.end(), 1);
+            break;
+        }
+        case ArrayScenario::Reversed:
+        {
+            std::iota(data.begin(), data.end(), 1);
+            std::ranges::reverse(data);
+            break;
+        }
+        case ArrayScenario::Equal:
+        {
+            std::ranges::fill(data, 42);
+            break;
+        }
+    }
+
+    return data;
+}
+
+void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size, const ArrayScenario scenario)
+{
+    IO::out << "\nInitialisiere Array mit n = " << size
+            << " Elementen (" << scenarioName(scenario) << ")...\n";
+
+    std::vector<std::int32_t> testArray = generateArray(size, scenario);
 
     SortAlgorithms::LiveMetrics metrics{};
     const auto start = std::chrono::high_resolution_clock::now();
@@ -43,7 +95,7 @@ void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size)
         case 5: SortAlgorithms::countingSort(testArray, nullptr, metrics); break;
         case 6: SortAlgorithms::bubbleSort(testArray, nullptr, metrics); break;
         default:
-            IO::out << "Ungültiger Algorithmus!\n";
+            IO::out << "Ungueltiger Algorithmus!\n";
             return;
     }
 
@@ -64,11 +116,11 @@ void runBenchmarkFor(const std::uint8_t algoIndex, const std::int32_t size)
 
 int main()
 {
-    std::int32_t arraySize = 50000;
+    std::int32_t   arraySize = 50000;
+    ArrayScenario  scenario  = ArrayScenario::Random;
 
     while (true)
     {
-        // Konsolen Ausgaben
         IO::out << "****************************************\n"
                 << "       Konsolen Benchmark               \n"
                 << "****************************************\n"
@@ -78,9 +130,11 @@ int main()
                 << " [6] BubbleSort\n"
                 << "****************************************\n"
                 << " [7] Array (n) anpassen\n"
+                << " [8] Szenario wechseln (Zufaellig/Sortiert/Umgekehrt/Gleichgross)\n"
                 << "****************************************\n"
                 << "Aktuelles Array (n): " << arraySize << "\n"
-                << "Ihre Auswahl (0-7): ";
+                << "Aktuelles Szenario : " << scenarioName(scenario) << "\n"
+                << "Ihre Auswahl (0-8): ";
 
         std::int32_t choice = -1;
         IO::in >> choice;
@@ -96,10 +150,10 @@ int main()
 
         if (choice >= 0 && choice <= 6) {
             IO::out << "\nStarte Benchmark...\n";
-            runBenchmarkFor(static_cast<std::uint8_t>(choice), arraySize);
+            runBenchmarkFor(static_cast<std::uint8_t>(choice), arraySize, scenario);
         }
         else if (choice == 7) {
-            IO::out << "\nNeue Array-Größe für n eingeben: ";
+            IO::out << "\nNeue Array-Groesse fuer n eingeben: ";
             IO::in >> arraySize;
             IO::clearBuffer();
 
@@ -108,6 +162,33 @@ int main()
                 arraySize = 50000;
             }
             IO::out << "[Info] Array auf n=" << arraySize << " gesetzt.\n\n";
+        }
+        else if (choice == 8) {
+            static constexpr std::array<ArrayScenario, 4> scenarios{
+                ArrayScenario::Random, ArrayScenario::Sorted,
+                ArrayScenario::Reversed, ArrayScenario::Equal
+            };
+
+            IO::out << "\nSzenario auswaehlen:\n"
+                    << " [0] Zufaellig\n"
+                    << " [1] Sortiert\n"
+                    << " [2] Umgekehrt sortiert\n"
+                    << " [3] Gleichgross\n"
+                    << "Ihre Auswahl (0-3): ";
+
+            std::int32_t scenarioChoice = -1;
+            IO::in >> scenarioChoice;
+
+            if (IO::in.fail() || scenarioChoice < 0 || scenarioChoice > 3) {
+                IO::in.clear();
+                IO::clearBuffer();
+                IO::out << "[Fehler] Ungueltige Auswahl. Szenario bleibt unveraendert.\n\n";
+                continue;
+            }
+
+            IO::clearBuffer();
+            scenario = scenarios[static_cast<std::size_t>(scenarioChoice)];
+            IO::out << "[Info] Szenario auf '" << scenarioName(scenario) << "' gesetzt.\n\n";
         }
         else {
             IO::out << "[Fehler] Falsche Auswahl!\n";
