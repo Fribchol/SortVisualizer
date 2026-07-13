@@ -1,4 +1,4 @@
-# 🔢 Algorithmus Visualizer
+# Algorithmus Visualizer
 
 Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **SDL3**.
 
@@ -9,7 +9,7 @@ Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **S
 
 ---
 
-## ✨ Features
+## Features
 
 - **Live-Animation** – Sieh zu wie der Algorithmus das Array sortiert
 - **Schritt-für-Schritt Modus** – Jeden einzelnen Schritt selbst steuern mit `>` und `<`
