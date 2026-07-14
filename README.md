@@ -1,4 +1,4 @@
-# 🔢 Algorithmus Visualizer
+# Algorithmus Visualizer
 
 Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **SDL3**.
 
@@ -9,7 +9,7 @@ Ein interaktiver **Sortieralgorithmus-Visualizer** in modernem **C++20** mit **S
 
 ---
 
-## ✨ Features
+## Features
 
 - **Live-Animation** – Sieh zu wie der Algorithmus das Array sortiert
 - **Schritt-für-Schritt Modus** – Jeden einzelnen Schritt selbst steuern mit `>` und `<`
@@ -113,22 +113,23 @@ algorithmus-visualizer/
 ├── DejaVuSans.ttf             
 ├── README.md
 └── src/
+    ├── AddExceptions.hpp
     ├── Main.cpp
-    ├── SortAlgorithms.cpp
     ├── SortAlgorithms.hpp
     ├── TerminalMain.cpp 
-    ├── Visualizer.hpp           
-    ├── Visualizer.cpp          
+    ├── Visualizer.cpp           
+    ├── Visualizer.hpp          
     ├── VisualizerDraw.cpp       
-    ├── VisualizerEvents.cpp
-    ├── AddExceptions.hpp     
+    ├── VisualizerEvents.cpp  
     └── Algorithms/
-        ├── QuickSort.hpp/.cpp
-        ├── MergeSortRec.hpp/.cpp
-        ├── MergeSortIt.hpp/.cpp
-        ├── HeapSort.hpp/.cpp
-        ├── RadixSort.hpp/.cpp
-        └── CountingSort.hpp/.cpp
+        ├── BubbleSort.cpp
+        ├── CountingSort.cpp
+        ├── HeapSort.cpp
+        ├── MergeSortIt.cpp
+        ├── MergeSortRec.cpp
+        ├── QuickSort.cpp
+        ├── RadixSort.cpp
+        └── SortInfo.cpp
 ```
 
 ---
