@@ -40,8 +40,6 @@ namespace SortAlgorithms
                 m.arrayAccesses += 2;
             }
 
-            // Der Median der drei Werte steht jetzt in arr[mid] und wird
-            // nach 'high' verschoben - danach ist arr[high] der Pivot.
             std::swap(arr[mid], arr[high]);
             ++m.swaps;
             m.arrayAccesses += 2;
@@ -104,16 +102,29 @@ namespace SortAlgorithms
                            const StepCallback&        cb,
                            LiveMetrics&                m)
         {
-            if (low >= high) return;
 
-            const std::size_t pivotIndex = partition<EnableVisuals>(arr, low, high, cb, m);
+            while (low < high)
+            {
+                const std::size_t pivotIndex = partition<EnableVisuals>(arr, low, high, cb, m);
 
-            if (pivotIndex > 0 && low <= pivotIndex - 1) {
-                quickSortRec<EnableVisuals>(arr, low, pivotIndex - 1, cb, m);
-            }
+                const std::size_t leftSize  = pivotIndex - low;
+                const std::size_t rightSize = high - pivotIndex;
 
-            if (pivotIndex < high) {
-                quickSortRec<EnableVisuals>(arr, pivotIndex + 1, high, cb, m);
+                if (leftSize < rightSize)
+                {
+                    if (pivotIndex > 0 && low <= pivotIndex - 1) {
+                        quickSortRec<EnableVisuals>(arr, low, pivotIndex - 1, cb, m);
+                    }
+                    low = pivotIndex + 1; // größere rechte Hälfte -> iterativ
+                }
+                else
+                {
+                    if (pivotIndex < high) {
+                        quickSortRec<EnableVisuals>(arr, pivotIndex + 1, high, cb, m);
+                    }
+                    if (pivotIndex == 0) break; // Schutz vor size_t-Unterlauf
+                    high = pivotIndex - 1; // größere linke Hälfte -> iterativ
+                }
             }
         }
     }

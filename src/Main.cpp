@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <span>
 #include <memory>
+#include <algorithm>
+#include <chrono>
 
 namespace {
 
@@ -21,6 +23,8 @@ namespace {
         std::string_view algoName{"quicksort"};
         std::int32_t     arraySize{100'000};
     };
+
+    struct UserRequestedStop {};
 
     [[nodiscard]] CliConfig parseArguments(const ArgsSpan args) noexcept
     {
@@ -36,7 +40,22 @@ namespace {
             }
             else if (arg == "--size" && (i + 1) < args.size()) {
                 const std::string_view sizeStr = args[++i];
-                std::from_chars(sizeStr.data(), sizeStr.data() + sizeStr.size(), config.arraySize);
+                std::int32_t parsed{};
+                const auto result = std::from_chars(
+                    sizeStr.data(), sizeStr.data() + sizeStr.size(), parsed);
+
+                if (result.ec == std::errc{} &&
+                    result.ptr == sizeStr.data() + sizeStr.size() &&
+                    parsed > 0)
+                {
+                    config.arraySize = parsed;
+                }
+                else
+                {
+                    std::cerr << std::format(
+                        "Warnung: Ungueltige --size '{}', verwende Default ({}).\n",
+                        sizeStr, config.arraySize);
+                }
             }
         }
         return config;
@@ -46,7 +65,7 @@ namespace {
     {
         std::cout << std::format("\n[ SortVisualizer - CLI Benchmark ]\n");
         std::cout << std::format("Algorithmus : {}\n", config.algoName);
-        std::cout << "Elemente    : " << config.arraySize << "\n";
+        std::cout << std::format("Elemente    : {}\n", config.arraySize);
         std::cout << "Generiere Zufallsdaten...\n";
 
         std::vector<std::int32_t> data(static_cast<std::size_t>(config.arraySize));
@@ -61,7 +80,7 @@ namespace {
         SortAlgorithms::LiveMetrics metrics{};
         std::cout << "Starte Sortierung...\n\n";
 
-
+        const auto start = std::chrono::steady_clock::now();
 
         if (config.algoName == "quicksort") {
             SortAlgorithms::quickSort(data, dummyCb, metrics);
@@ -82,7 +101,17 @@ namespace {
             return;
         }
 
+        const auto elapsed = std::chrono::steady_clock::now() - start;
+        const auto elapsedMs = std::chrono::duration<double, std::milli>(elapsed).count();
 
+        std::cout << std::format("Fertig in {:.3f} ms\n", elapsedMs);
+        std::cout << std::format("Vergleiche  : {}\n", metrics.comparisons);
+        std::cout << std::format("Swaps       : {}\n", metrics.swaps);
+        std::cout << std::format("Array-Zugr. : {}\n", metrics.arrayAccesses);
+
+        if (!std::ranges::is_sorted(data)) {
+            std::cerr << "Warnung: Ergebnis ist NICHT sortiert!\n";
+        }
     }
 
 }
@@ -100,16 +129,10 @@ int main(const int argc, char* argv[])
             vis->run();
         }
     }
-    catch (const std::runtime_error& e)
+    catch (const UserRequestedStop&)
     {
-        // Spezielle Behandlung für Programmabbruch
-        if (std::string_view{e.what()} == "__STOP__") {
-            return 0; // Abbruch ist kein Fehler, beendet Programm sauber
-        }
-
-        // Fehler werden per Message Box gemeldet
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Kritischer Fehler", e.what(), nullptr);
-        return 1;
+        // Abbruch ist kein Fehler, beendet Programm sauber.
+        return 0;
     }
     catch (const std::exception& e)
     {

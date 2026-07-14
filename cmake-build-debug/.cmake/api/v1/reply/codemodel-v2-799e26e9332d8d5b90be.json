@@ -1,0 +1,78 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SortVisualizer",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "AlgoLib::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-AlgoLib-Debug-fb02c9949acf0d9fcd0e.json",
+					"name" : "AlgoLib",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SortBenchmark::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SortBenchmark-Debug-38a2e9b9e909a6365b83.json",
+					"name" : "SortBenchmark",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SortVisualizer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SortVisualizer-Debug-a1e48de9c0722cf311fd.json",
+					"name" : "SortVisualizer",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/SortVisualizer/cmake-build-debug",
+		"source" : "C:/Users/SortVisualizer"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
